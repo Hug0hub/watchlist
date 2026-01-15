@@ -841,9 +841,10 @@
                 
                 let posterContent = `<span style="color: #d4af37; font-weight: bold; font-size: ${fontSize}; line-height: 1.3; padding: 10px; text-align: center; display: block;">${film.title}</span>`;
                 if (film.posterUrl && film.posterUrl.startsWith('http')) {
-                    // Convertir HTTP en HTTPS pour éviter les problèmes de mixed content
+                    // Convertir HTTP en HTTPS et passer par un proxy CORS
                     const posterUrl = film.posterUrl.replace(/^http:/, 'https:');
-                    posterContent = `<img src="${posterUrl}" alt="${film.title}">`;
+                    const proxiedUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(posterUrl)}`;
+                    posterContent = `<img src="${proxiedUrl}" alt="${film.title}" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\\\"color: #d4af37; font-weight: bold; font-size: ${fontSize}; line-height: 1.3; padding: 10px; text-align: center; display: block;\\\">${film.title}</span>'">`;
                 }
                 
                 const validAwards = film.awards.filter(a => !a.includes('http') && !a.includes('://'));
