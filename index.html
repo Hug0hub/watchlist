@@ -840,11 +840,11 @@
                 const realIndex = allFilms.findIndex(f => f.title === film.title && f.year === film.year);
                 
                 let posterContent = `<span style="color: #d4af37; font-weight: bold; font-size: ${fontSize}; line-height: 1.3; padding: 10px; text-align: center; display: block;">${film.title}</span>`;
-                if (film.posterUrl && film.posterUrl.startsWith('http')) {
-                    // Convertir HTTP en HTTPS et passer par un proxy CORS
-                    const posterUrl = film.posterUrl.replace(/^http:/, 'https:');
-                    const proxiedUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(posterUrl)}`;
-                    posterContent = `<img src="${proxiedUrl}" alt="${film.title}" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\\\"color: #d4af37; font-weight: bold; font-size: ${fontSize}; line-height: 1.3; padding: 10px; text-align: center; display: block;\\\">${film.title}</span>'">`;
+                if (film.posterUrl && film.posterUrl.trim()) {
+                    // Utiliser images.weserv.nl comme proxy CORS
+                    const encodedUrl = encodeURIComponent(film.posterUrl.replace(/^http:/, 'https:'));
+                    const proxyUrl = `https://images.weserv.nl/?url=${encodedUrl}`;
+                    posterContent = `<img src="${proxyUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\\\"color: #d4af37; font-weight: bold; font-size: ${fontSize}; line-height: 1.3; padding: 10px; text-align: center; display: block;\\\">${film.title}</span>'">`;
                 }
                 
                 const validAwards = film.awards.filter(a => !a.includes('http') && !a.includes('://'));
@@ -897,6 +897,13 @@
             const bgColor = generateColorFromTitle(film.title);
 
             let posterContent = `<div style="width:100%; height:100%; background: linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]}); display:flex; align-items:center; justify-content:center;"><span style="color:#d4af37; font-size:2em; font-weight:bold; text-align:center; padding:20px;">${film.title}</span></div>`;
+            
+            if (film.posterUrl && film.posterUrl.trim()) {
+                // Utiliser images.weserv.nl comme proxy CORS
+                const encodedUrl = encodeURIComponent(film.posterUrl.replace(/^http:/, 'https:'));
+                const proxyUrl = `https://images.weserv.nl/?url=${encodedUrl}`;
+                posterContent = `<img src="${proxyUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
             
             if (film.posterUrl && film.posterUrl.startsWith('http')) {
                 posterContent = `<img src="${film.posterUrl}" alt="${film.title}">`;
