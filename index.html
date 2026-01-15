@@ -841,7 +841,9 @@
                 
                 let posterContent = `<span style="color: #d4af37; font-weight: bold; font-size: ${fontSize}; line-height: 1.3; padding: 10px; text-align: center; display: block;">${film.title}</span>`;
                 if (film.posterUrl && film.posterUrl.startsWith('http')) {
-                    posterContent = `<img src="${film.posterUrl}" alt="${film.title}">`;
+                    // Convertir HTTP en HTTPS pour éviter les problèmes de mixed content
+                    const posterUrl = film.posterUrl.replace(/^http:/, 'https:');
+                    posterContent = `<img src="${posterUrl}" alt="${film.title}">`;
                 }
                 
                 const validAwards = film.awards.filter(a => !a.includes('http') && !a.includes('://'));
@@ -1256,10 +1258,6 @@
                 )
             `;
         }
-		function posterProxy(url) {
-  return "https://images.weserv.nl/?url=" +
-         url.replace(/^https?:\/\//, "");
-}
 
         window.addEventListener('DOMContentLoaded', function() {
             loadFilmsFromStorage();
@@ -1287,5 +1285,4 @@
                 if (e.key === 'Enter') filterFilms();
             });
         });
-
     </script>
