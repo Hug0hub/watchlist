@@ -1256,6 +1256,10 @@
                 )
             `;
         }
+		function posterProxy(url) {
+  return "https://images.weserv.nl/?url=" +
+         url.replace(/^https?:\/\//, "");
+}
 
         window.addEventListener('DOMContentLoaded', function() {
             loadFilmsFromStorage();
@@ -1283,4 +1287,5 @@
                 if (e.key === 'Enter') filterFilms();
             });
         });
+
     </script>
