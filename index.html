@@ -763,6 +763,19 @@
         let hideWatchedMode = false;
         let showOnlyWatchedMode = false;
 
+        async function fetchTMDbPoster(title, year) {
+            try {
+                const response = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=219797a5b6b5a6f5c5a9e5c5a9e5c5a9&query=${encodeURIComponent(title)}&year=${year}`);
+                const data = await response.json();
+                if (data.results && data.results[0] && data.results[0].poster_path) {
+                    return `https://image.tmdb.org/t/p/w500${data.results[0].poster_path}`;
+                }
+            } catch (error) {
+                console.log('TMDb recherche échouée pour:', title);
+            }
+            return null;
+        }
+
         function loadFilmsFromStorage() {
             try {
                 const stored = localStorage.getItem('cinema_films');
@@ -841,10 +854,7 @@
                 
                 let posterContent = `<span style="color: #d4af37; font-weight: bold; font-size: ${fontSize}; line-height: 1.3; padding: 10px; text-align: center; display: block;">${film.title}</span>`;
                 if (film.posterUrl && film.posterUrl.trim()) {
-                    // Utiliser images.weserv.nl comme proxy CORS
-                    const encodedUrl = encodeURIComponent(film.posterUrl.replace(/^http:/, 'https:'));
-                    const proxyUrl = `https://images.weserv.nl/?url=${encodedUrl}`;
-                    posterContent = `<img src="${proxyUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\\\"color: #d4af37; font-weight: bold; font-size: ${fontSize}; line-height: 1.3; padding: 10px; text-align: center; display: block;\\\">${film.title}</span>'">`;
+                    posterContent = `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', ${film.year})" onload="this.style.opacity=1">`;
                 }
                 
                 const validAwards = film.awards.filter(a => !a.includes('http') && !a.includes('://'));
@@ -899,10 +909,7 @@
             let posterContent = `<div style="width:100%; height:100%; background: linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]}); display:flex; align-items:center; justify-content:center;"><span style="color:#d4af37; font-size:2em; font-weight:bold; text-align:center; padding:20px;">${film.title}</span></div>`;
             
             if (film.posterUrl && film.posterUrl.trim()) {
-                // Utiliser images.weserv.nl comme proxy CORS
-                const encodedUrl = encodeURIComponent(film.posterUrl.replace(/^http:/, 'https:'));
-                const proxyUrl = `https://images.weserv.nl/?url=${encodedUrl}`;
-                posterContent = `<img src="${proxyUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                posterContent = `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', ${film.year})">`;
             }
             
             if (film.posterUrl && film.posterUrl.startsWith('http')) {
@@ -1265,6 +1272,19 @@
                     transparent 70%
                 )
             `;
+        }
+
+        function tryTMDbPoster(imgElement, title, year) {
+            fetchTMDbPoster(title, year).then(posterUrl => {
+                if (posterUrl) {
+                    imgElement.src = posterUrl;
+                    imgElement.style.opacity = '1';
+                } else {
+                    imgElement.style.display = 'none';
+                    const fontSize = window.getComputedStyle(imgElement).fontSize;
+                    imgElement.parentElement.innerHTML = `<span style="color: #d4af37; font-weight: bold; font-size: 1.8em; line-height: 1.3; padding: 10px; text-align: center; display: block;">${title}</span>`;
+                }
+            });
         }
 
         window.addEventListener('DOMContentLoaded', function() {
