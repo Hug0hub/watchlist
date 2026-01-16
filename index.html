@@ -762,6 +762,25 @@
         let allFilms = [];
         let hideWatchedMode = false;
         let showOnlyWatchedMode = false;
+        const TMDB_API_KEY = '60c056a57daa70ab8cafa7571f604e1c';
+
+        async function getTMDbPoster(title, year) {
+            try {
+                const response = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&year=${year}`);
+                const data = await response.json();
+                console.log(`TMDb recherche pour "${title}" (${year}):`, data);
+                if (data.results && data.results.length > 0 && data.results[0].poster_path) {
+                    const posterUrl = `https://image.tmdb.org/t/p/w500${data.results[0].poster_path}`;
+                    console.log(`Poster trouvé: ${posterUrl}`);
+                    return posterUrl;
+                } else {
+                    console.log(`Aucun poster trouvé pour "${title}"`);
+                }
+            } catch (error) {
+                console.error('Erreur TMDb pour:', title, error);
+            }
+            return null;
+        }
 
         async function fetchTMDbPoster(title, year) {
             try {
@@ -808,29 +827,36 @@
             return lines.map(line => {
                 const parts = line.split('\t').map(p => p.trim());
                 
-                let genres = [];
-                let genreIndex = -1;
-                for (let i = 0; i < parts.length; i++) {
-                    if (parts[i].includes(',') && !parts[i].includes(':') && !parts[i].includes('http')) {
-                        genres = parts[i].split(',').map(g => g.trim()).filter(g => g);
-                        genreIndex = i;
-                        break;
-                    }
+                // Structure fixe : Titre | Année | Durée | Awards | Genres | Plateforme | URL
+                if (parts.length < 5) {
+                    return null;
                 }
                 
+                const title = parts[0];           // Peut contenir des virgules !
+                const year = parts[1];
+                const duration = parts[2];
+                const awardText = parts[3];       // Awards - peut contenir des virgules
+                const genreText = parts[4];       // Genres - peut contenir des virgules
+                const platform = parts[5] || '';
+                const posterUrl = parts[6] || '';
+                
+                // Genres : split par virgule (peut être vide ou un seul genre sans virgule)
+                const genres = genreText ? genreText.split(',').map(g => g.trim()).filter(g => g) : [];
+                
+                // Awards : ce qu'on avait à l'index 3
+                const awards = awardText ? [awardText] : [];
+                
                 return {
-                    title: parts[0] || '',
-                    year: parts[1] || '',
-                    duration: parts[2] || '',
-                    awards: [parts[3], parts[4], parts[5], parts[6], parts[7], parts[8]]
-                        .filter(a => a && a.trim() && !a.includes('http'))
-                        .map(a => a.trim()),
+                    title: title,
+                    year: year,
+                    duration: duration,
+                    awards: awards,
                     genres: genres,
-                    platform: genreIndex >= 0 ? (parts[genreIndex + 1] || '') : '',
-                    posterUrl: genreIndex >= 0 ? (parts[genreIndex + 2] || '') : '',
+                    platform: platform,
+                    posterUrl: posterUrl,
                     watched: false
                 };
-            }).filter(f => f.title);
+            }).filter(f => f && f.title);
         }
 
         function displayFilms(films) {
