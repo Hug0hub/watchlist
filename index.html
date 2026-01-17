@@ -614,8 +614,8 @@
 let allFilms = [];
 let hideWatchedMode = false;
 let showOnlyWatchedMode = false;
+// ⚠️ REMPLACEZ PAR VOTRE CLÉ API v3 (disponible sur https://www.themoviedb.org/settings/api)
 const TMDB_API_KEY = 'a8b8177cf88f3604d3df137469205626';
-const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhOGI4MTc3Y2Y4OGYzNjA0ZDNkZjEzNzQ2OTIwNTYyNiIsIm5iZiI6MTcwNDgzNzA3NC4xNiwic3ViIjoiNjU5ZGJmZDI5NTkwZTMwMGYwYWNjMTgxIiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.IJkvERUyZSykAsgf7TQy6j7U35YoPdORsAfy19yH3Bg';
 
 let lastTmdbRequest = 0;
 const MIN_REQUEST_DELAY = 250;
@@ -628,11 +628,11 @@ async function getTMDbPoster(title, year) {
         }
         lastTmdbRequest = Date.now();
 
+        // Utilisation de l'API v3 avec api_key en paramètre URL
         const response = await fetch(
-            `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(title)}&year=${year}`,
+            `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&year=${year}&language=fr-FR`,
             {
                 headers: {
-                    'Authorization': `Bearer ${TMDB_TOKEN}`,
                     'accept': 'application/json'
                 }
             }
@@ -648,6 +648,8 @@ async function getTMDbPoster(title, year) {
             const posterUrl = `https://image.tmdb.org/t/p/w500${data.results[0].poster_path}`;
             console.log(`✓ Poster trouvé: ${title}`);
             return posterUrl;
+        } else {
+            console.log(`✗ Pas de résultats pour: ${title}`);
         }
     } catch (error) {
         console.error('Erreur TMDb:', title, error);
