@@ -1092,7 +1092,7 @@
             }).join('');
         }
 
-        function openModal(index) {
+  function openModal(index) {
             const film = allFilms[index];
             const modal = document.getElementById('filmModal');
             const content = document.getElementById('modalCardContent');
@@ -1123,7 +1123,8 @@
                     </div>` : ''}
                     <div style="margin-top: 30px; display: flex; gap: 15px;">
                         <button onclick="checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn" style="padding: 15px 30px;">🎥 Streaming</button>
-                        <button onclick="openEditModal(${index})" class="btn-primary" style="padding: 15px 30px; border:none; border-radius:4px;">✎ Modifier</button>
+                        
+                        <button onclick="closeModal(); openEditModal(${index})" class="btn-primary" style="padding: 15px 30px; border:none; border-radius:4px;">✎ Modifier</button>
                     </div>
                 </div>
             `;
