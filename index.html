@@ -1,4 +1,764 @@
-<script>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CINÉMA - Collection Prestigieuse</title>
+    <link rel="icon" id="favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🎬</text></svg>" type="image/svg+xml">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@300;400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Lato', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0d1129 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #e8e8e8;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(212, 175, 55, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 1s ease;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 5em;
+            font-weight: 900;
+            color: #d4af37;
+            letter-spacing: 4px;
+            margin-bottom: 15px;
+            text-shadow: 
+                0 0 30px rgba(212, 175, 55, 0.3),
+                0 2px 10px rgba(0, 0, 0, 0.8);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        header h1:hover {
+            text-shadow: 
+                0 0 40px rgba(212, 175, 55, 0.5),
+                0 2px 15px rgba(0, 0, 0, 0.9);
+            transform: scale(1.02);
+        }
+
+        header h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #d4af37, transparent);
+        }
+
+        header p {
+            font-size: 1.3em;
+            color: #b8956a;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-top: 25px;
+        }
+
+        .controls {
+            background: linear-gradient(135deg, rgba(26, 31, 58, 0.95), rgba(40, 45, 75, 0.95));
+            backdrop-filter: blur(20px);
+            padding: 25px;
+            border-radius: 0px;
+            margin-bottom: 40px;
+            border: 2px solid rgba(212, 175, 55, 0.2);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(212, 175, 55, 0.1);
+            animation: fadeInUp 1s ease 0.1s backwards;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #d4af37;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input {
+            padding: 10px 12px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 4px;
+            font-size: 0.9em;
+            background: rgba(10, 14, 39, 0.8);
+            color: #e8e8e8;
+            transition: all 0.3s;
+            font-family: 'Lato', sans-serif;
+        }
+
+        input::placeholder {
+            color: rgba(184, 149, 106, 0.5);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #d4af37;
+            background: rgba(10, 14, 39, 0.95);
+            box-shadow: 
+                0 0 0 3px rgba(212, 175, 55, 0.15),
+                inset 0 0 10px rgba(212, 175, 55, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 4px;
+            flex-wrap: nowrap;
+            align-items: center;
+            overflow: visible;
+            padding-bottom: 5px;
+            width: 100%;
+        }
+
+        .button-group::-webkit-scrollbar {
+            height: 4px;
+        }
+        .button-group::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .button-group::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.3);
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 8px;
+            background: linear-gradient(135deg, #d4af37 0%, #c9a961 100%);
+            color: #1a1f3a;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.7em;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+            white-space: nowrap;
+            flex: 1;
+            min-width: fit-content;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+            background: linear-gradient(135deg, #e8c547 0%, #d4af37 100%);
+            z-index: 2;
+        }
+
+        button:active {
+            transform: scale(1.01);
+        }
+
+        button.secondary {
+            background: rgba(212, 175, 55, 0.05);
+            color: #d4af37;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            box-shadow: none;
+        }
+
+        button.secondary:hover {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: #d4af37;
+        }
+
+        .stats {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.08));
+            backdrop-filter: blur(20px);
+            padding: 25px 30px;
+            border-radius: 0px;
+            margin-bottom: 40px;
+            color: #e8e8e8;
+            font-weight: 500;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 1s ease 0.2s backwards;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-container {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .stats-left {
+            min-width: 120px;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #d4af37;
+            text-align: center;
+        }
+
+        .stats-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #d4af37 0%, #c9a961 100%);
+            border-radius: 14px;
+            transition: width 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            font-weight: 700;
+            color: #1a1f3a;
+            min-width: 35px;
+        }
+
+        .progress-percentage {
+            font-size: 0.85em;
+            color: #b8956a;
+            text-align: center;
+        }
+
+        .stats-right {
+            min-width: 140px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #d4af37;
+        }
+
+        .films-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 30px;
+            animation: fadeInUp 1s ease 0.3s backwards;
+            position: relative;
+            z-index: 0;
+        }
+
+        .film-card {
+            background: linear-gradient(135deg, rgba(26, 31, 58, 0.9), rgba(40, 45, 75, 0.9));
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            cursor: pointer;
+            height: 100%;
+            position: relative;
+            z-index: 1;
+            overflow: visible;
+            isolation: isolate;
+        }
+
+        .film-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(212, 175, 55, 0.5);
+            z-index: 3;
+        }
+
+        .film-poster {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #2a2f55, #1a1f3a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(212, 175, 55, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .film-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .film-poster span {
+            font-size: 2em;
+            text-align: center;
+            padding: 20px;
+            line-height: 1.3;
+            font-weight: bold;
+        }
+
+        .film-info-section {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: auto;
+            overflow-y: visible;
+        }
+
+        .film-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15em;
+            font-weight: 700;
+            color: #d4af37;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .film-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .info-item {
+            padding: 8px 10px;
+            background: rgba(212, 175, 55, 0.08);
+            border-left: 2px solid #d4af37;
+            border-radius: 3px;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: #d4af37;
+            font-size: 0.65em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            color: #e8e8e8;
+            font-size: 0.85em;
+        }
+
+        .genres {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .genre-tag {
+            background: rgba(212, 175, 55, 0.12);
+            color: #d4af37;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-weight: 600;
+        }
+
+        .awards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .award-badge {
+            background: linear-gradient(135deg, #d4af37 0%, #c9a961 100%);
+            color: #1a1f3a;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .watched-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .watched-checkbox input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #d4af37;
+        }
+
+        .watched-checkbox label {
+            color: #b8956a;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .film-card.watched {
+            opacity: 0.6;
+        }
+
+        .film-card.watched .film-poster {
+            filter: brightness(0.6) saturate(0.3);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .justwatch-btn {
+            flex: 1;
+            padding: 10px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+        }
+
+        .justwatch-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.4);
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+        }
+
+        .delete-btn {
+            padding: 10px;
+            background: rgba(212, 175, 55, 0.12);
+            color: #d4af37;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.8em;
+            transition: all 0.3s;
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            background: rgba(220, 53, 69, 0.3);
+            border-color: #dc3545;
+            color: #ff6b7a;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: rgba(184, 149, 106, 0.6);
+            font-size: 1.3em;
+            padding: 100px 20px;
+            grid-column: 1 / -1;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 14, 39, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-card {
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            background: #1a1f3a;
+            border: 1px solid #d4af37;
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
+            border-radius: 4px;
+            display: flex;
+            overflow: hidden;
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-poster {
+            width: 40%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-info {
+            width: 60%;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #d4af37;
+            font-size: 2em;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: none;
+            width: auto;
+            padding: 0;
+        }
+
+        .modal-close:hover {
+            transform: scale(1.2);
+            background: none;
+            color: #fff;
+            box-shadow: none;
+        }
+
+        #dynamic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            background: radial-gradient(circle at center,
+                rgba(212, 175, 55, 0.05) 0%,
+                transparent 70%);
+            opacity: 0.5;
+            transition: background 0.4s ease, opacity 0.4s ease;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 3em;
+            }
+
+            .controls {
+                padding: 25px;
+            }
+
+            .controls-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 15px;
+            }
+
+            .button-group {
+                flex-wrap: wrap;
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .films-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 20px;
+            }
+
+            .stats-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .stats-left,
+            .stats-right {
+                width: 100%;
+            }
+
+            .stats-center {
+                width: 100%;
+            }
+
+            .modal-card {
+                flex-direction: column;
+                height: 85vh;
+                overflow-y: auto;
+            }
+
+            .modal-poster {
+                width: 100%;
+                height: 300px;
+            }
+
+            .modal-info {
+                width: 100%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="dynamic-bg"></div>
+
+    <div class="container">
+        <header>
+            <h1 style="cursor: pointer;" onclick="goHome()">🎬 CINÉMA</h1>
+            <p>Collection de Films</p>
+        </header>
+        
+        <div class="controls">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label for="searchTitle">Titre</label>
+                    <input type="text" id="searchTitle" placeholder="Rechercher...">
+                </div>
+                <div class="control-group">
+                    <label for="filterYearMin">Année (de)</label>
+                    <input type="number" id="filterYearMin" placeholder="Exemple: 2000">
+                </div>
+                <div class="control-group">
+                    <label for="filterYearMax">Année (à)</label>
+                    <input type="number" id="filterYearMax" placeholder="Exemple: 2023">
+                </div>
+                <div class="control-group">
+                    <label for="filterGenre">Genre</label>
+                    <input type="text" id="filterGenre" placeholder="Exemple: Drame">
+                </div>
+                <div class="control-group">
+                    <label for="filterPlatform">Plateforme</label>
+                    <input type="text" id="filterPlatform" placeholder="Exemple: Netflix">
+                </div>
+                <div class="control-group">
+                    <label for="filterDuration">Durée Max</label>
+                    <input type="text" id="filterDuration" placeholder="2:30">
+                </div>
+            </div>
+            <div class="button-group">
+                <button onclick="filterFilms()">🔍 Filtrer</button>
+                <button class="secondary" onclick="resetFilters()">↺ Réinitialiser</button>
+                <button class="secondary" onclick="sortAlphabetically()">🔤 Alphabétique</button>
+                <button class="secondary" onclick="sortByYear()">📅 Plus Récent</button>
+                <button class="secondary" onclick="getRandomFilm()">🎲 Aléatoire</button>
+                <button class="secondary" onclick="toggleHideWatched()" id="hideWatchedBtn">👁️ Masquer Vus</button>
+                <button class="secondary" onclick="toggleShowOnlyWatched()" id="onlyWatchedBtn">✅ Afficher Vus</button>
+                <button class="secondary" onclick="removeDuplicates()">🗂️ Doublons</button>
+                <button class="secondary" onclick="document.getElementById('fileInput').click()">📂 Importer</button>
+                <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="handleFileImport(event)">
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stats-container">
+                <div class="stats-left" id="statsLeft">0 films</div>
+                <div class="stats-center">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%;">
+                        </div>
+                    </div>
+                    <div class="progress-percentage" id="progressPercentage">0% complété</div>
+                </div>
+                <div class="stats-right" id="statsRight">0/0 vus</div>
+            </div>
+        </div>
+        
+        <div id="filmsList" class="films-grid"></div>
+    </div>
+
+	<div id="filmModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-card" id="modalCardContent" onclick="event.stopPropagation()">
+        </div>
+    </div>
+
+    <script>
         // --- CONFIGURATION ---
         // Votre clé API fournie
         const TMDB_API_KEY = 'a8b8177cf88f3604d3df137469205626'; 
