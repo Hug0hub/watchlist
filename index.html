@@ -1,802 +1,512 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CINÉMA - Collection Prestigieuse</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@300;400;700&display=swap');
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Lato', sans-serif;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0d1129 100%);
-            background-attachment: fixed;
-            min-height: 100vh;
-            padding: 40px 20px;
-            color: #e8e8e8;
-            position: relative;
-            overflow-x: hidden;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: radial-gradient(ellipse at 20% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(212, 175, 55, 0.03) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: -1;
-        }
-        .container { max-width: 1800px; margin: 0 auto; }
-        header { text-align: center; margin-bottom: 50px; animation: fadeInDown 1s ease; }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-        header h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 5em; font-weight: 900; color: #d4af37;
-            letter-spacing: 4px; margin-bottom: 15px;
-            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3), 0 2px 10px rgba(0, 0, 0, 0.8);
-            cursor: pointer; transition: all 0.3s; position: relative;
-        }
-        header h1:hover {
-            text-shadow: 0 0 40px rgba(212, 175, 55, 0.5), 0 2px 15px rgba(0, 0, 0, 0.9);
-            transform: scale(1.02);
-        }
-        header h1::after {
-            content: ''; position: absolute; bottom: -10px; left: 50%;
-            transform: translateX(-50%); width: 100px; height: 1px;
-            background: linear-gradient(90deg, transparent, #d4af37, transparent);
-        }
-        header p { font-size: 1.3em; color: #b8956a; font-weight: 300; letter-spacing: 2px; margin-top: 25px; }
-        .controls {
-            background: linear-gradient(135deg, rgba(26, 31, 58, 0.95), rgba(40, 45, 75, 0.95));
-            backdrop-filter: blur(20px);
-            padding: 25px; margin-bottom: 40px;
-            border: 2px solid rgba(212, 175, 55, 0.2);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(212, 175, 55, 0.1);
-            animation: fadeInUp 1s ease 0.1s backwards;
-        }
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 20px; margin-bottom: 25px;
-        }
-        .control-group { display: flex; flex-direction: column; }
-        label {
-            font-weight: 700; margin-bottom: 8px; color: #d4af37;
-            font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px;
-        }
-        input {
-            padding: 10px 12px; border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 4px; font-size: 0.9em;
-            background: rgba(10, 14, 39, 0.8); color: #e8e8e8;
-            transition: all 0.3s; font-family: 'Lato', sans-serif;
-        }
-        input::placeholder { color: rgba(184, 149, 106, 0.5); }
-        input:focus {
-            outline: none; border-color: #d4af37;
-            background: rgba(10, 14, 39, 0.95);
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15), inset 0 0 10px rgba(212, 175, 55, 0.1);
-        }
-        .button-group { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; width: 100%; }
-        button {
-            padding: 10px 8px;
-            background: linear-gradient(135deg, #d4af37 0%, #c9a961 100%);
-            color: #1a1f3a; border: none; border-radius: 4px;
-            cursor: pointer; font-weight: 700; font-size: 0.7em;
-            letter-spacing: 0.5px; transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            text-transform: uppercase; white-space: nowrap;
-            flex: 1; min-width: fit-content;
-            display: flex; justify-content: center; align-items: center;
-        }
-        button:hover {
-            transform: scale(1.02);
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
-            background: linear-gradient(135deg, #e8c547 0%, #d4af37 100%);
-        }
-        button:active { transform: scale(1.01); }
-        button.secondary {
-            background: rgba(212, 175, 55, 0.05);
-            color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.25);
-            box-shadow: none;
-        }
-        button.secondary:hover {
-            background: rgba(212, 175, 55, 0.15);
-            border-color: #d4af37;
-        }
-        .stats {
-            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.08));
-            backdrop-filter: blur(20px);
-            padding: 25px 30px; margin-bottom: 40px;
-            color: #e8e8e8; font-weight: 500;
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-            animation: fadeInUp 1s ease 0.2s backwards;
-            letter-spacing: 0.5px;
-        }
-        .stats-container { display: flex; align-items: center; gap: 30px; }
-        .stats-left {
-            min-width: 120px; font-size: 1.2em; font-weight: 700;
-            color: #d4af37; text-align: center;
-        }
-        .stats-center { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        .progress-bar {
-            width: 100%; height: 28px; background: rgba(0, 0, 0, 0.3);
-            border-radius: 14px; overflow: hidden;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #d4af37 0%, #c9a961 100%);
-            border-radius: 14px; transition: width 0.4s ease;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.75em; font-weight: 700; color: #1a1f3a;
-            min-width: 35px;
-        }
-        .progress-percentage { font-size: 0.85em; color: #b8956a; text-align: center; }
-        .stats-right {
-            min-width: 140px; text-align: center;
-            font-size: 1.1em; font-weight: 700; color: #d4af37;
-        }
-        .films-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 30px; animation: fadeInUp 1s ease 0.3s backwards;
-            position: relative; z-index: 0;
-        }
-        .film-card {
-            background: linear-gradient(135deg, rgba(26, 31, 58, 0.9), rgba(40, 45, 75, 0.9));
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            display: flex; flex-direction: column;
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            cursor: pointer; height: 100%;
-            position: relative; z-index: 1; overflow: visible; isolation: isolate;
-        }
-        .film-card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(212, 175, 55, 0.5); z-index: 3;
-        }
-        .film-poster {
-            width: 100%; height: 400px;
-            background: linear-gradient(135deg, #2a2f55, #1a1f3a);
-            display: flex; align-items: center; justify-content: center;
-            color: rgba(212, 175, 55, 0.2);
-            overflow: hidden; position: relative;
-        }
-        .film-poster img { width: 100%; height: 100%; object-fit: cover; }
-        .film-poster span {
-            font-size: 2em; text-align: center; padding: 20px;
-            line-height: 1.3; font-weight: bold;
-        }
-        .film-info-section {
-            padding: 15px; flex-grow: 1;
-            display: flex; flex-direction: column;
-        }
-        .film-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.15em; font-weight: 700; color: #d4af37;
-            margin-bottom: 10px; line-height: 1.2;
-        }
-        .film-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px; margin-bottom: 12px;
-        }
-        .info-item {
-            padding: 8px 10px;
-            background: rgba(212, 175, 55, 0.08);
-            border-left: 2px solid #d4af37; border-radius: 3px;
-        }
-        .info-label {
-            font-weight: 700; color: #d4af37; font-size: 0.65em;
-            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;
-        }
-        .info-value { color: #e8e8e8; font-size: 0.85em; }
-        .genres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-        .genre-tag {
-            background: rgba(212, 175, 55, 0.12); color: #d4af37;
-            padding: 4px 10px; border-radius: 20px; font-size: 0.7em;
-            border: 1px solid rgba(212, 175, 55, 0.25);
-            text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600;
-        }
-        .watched-checkbox {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
-        }
-        .watched-checkbox input {
-            width: 16px; height: 16px; cursor: pointer; accent-color: #d4af37;
-        }
-        .watched-checkbox label {
-            color: #b8956a; cursor: pointer; font-size: 0.85em;
-            margin: 0; font-weight: 600; letter-spacing: 0.3px;
-        }
-        .film-card.watched { opacity: 0.6; }
-        .film-card.watched .film-poster {
-            filter: brightness(0.6) saturate(0.3);
-        }
-        .action-buttons { display: flex; gap: 8px; margin-top: auto; }
-        .justwatch-btn {
-            flex: 1; padding: 10px;
-            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-            color: white; border: none; border-radius: 4px;
-            cursor: pointer; font-weight: 700; font-size: 0.75em;
-            text-transform: uppercase; letter-spacing: 0.5px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
-        }
-        .justwatch-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.4);
-            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
-        }
-        .delete-btn {
-            padding: 10px; background: rgba(212, 175, 55, 0.12);
-            color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 4px; cursor: pointer; font-weight: 700; font-size: 0.8em;
-            transition: all 0.3s; width: 40px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .delete-btn:hover {
-            background: rgba(220, 53, 69, 0.3);
-            border-color: #dc3545; color: #ff6b7a;
-        }
-        .empty-message {
-            text-align: center; color: rgba(184, 149, 106, 0.6);
-            font-size: 1.3em; padding: 100px 20px; grid-column: 1 / -1;
-            font-weight: 300; letter-spacing: 1px;
-        }
-        .modal-overlay {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(10, 14, 39, 0.9);
-            backdrop-filter: blur(8px);
-            z-index: 2000; display: flex;
-            justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.4s ease;
-        }
-        .modal-overlay.active { opacity: 1; pointer-events: all; }
-        .modal-card {
-            width: 90%; max-width: 800px; max-height: 90vh;
-            background: #1a1f3a;
-            border: 1px solid #d4af37;
-            box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
-            border-radius: 4px; display: flex; overflow: hidden;
-            transform: scale(0.9) translateY(20px);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-        }
-        .modal-overlay.active .modal-card {
-            transform: scale(1) translateY(0);
-        }
-        .modal-poster {
-            width: 40%; background: #000;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .modal-poster img { width: 100%; height: 100%; object-fit: cover; }
-        .modal-info {
-            width: 60%; padding: 40px;
-            overflow-y: auto; position: relative;
-        }
-        .modal-close {
-            position: absolute; top: 15px; right: 20px;
-            background: none; border: none; color: #d4af37;
-            font-size: 2em; cursor: pointer; z-index: 10;
-            box-shadow: none; width: auto; padding: 0;
-        }
-        .modal-close:hover {
-            transform: scale(1.2); color: #fff;
-        }
-        #dynamic-bg {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none; z-index: -1;
-            background: radial-gradient(circle at center, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
-            opacity: 0.5;
-            transition: background 0.4s ease, opacity 0.4s ease;
-        }
-        @media (max-width: 768px) {
-            header h1 { font-size: 3em; }
-            .controls { padding: 25px; }
-            .controls-grid {
-                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-                gap: 15px;
-            }
-            .button-group { flex-direction: column; }
-            button { width: 100%; }
-            .films-grid {
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-                gap: 20px;
-            }
-            .stats-container { flex-direction: column; gap: 15px; }
-            .stats-left, .stats-right, .stats-center { width: 100%; }
-            .modal-card { flex-direction: column; height: 85vh; overflow-y: auto; }
-            .modal-poster { width: 100%; height: 300px; }
-            .modal-info { width: 100%; padding: 20px; }
-        }
-    </style>
-</head>
-<body>
-<div id="dynamic-bg"></div>
-<div class="container">
-    <header>
-        <h1 style="cursor: pointer;" onclick="goHome()">🎬 CINÉMA</h1>
-        <p>Collection de Films</p>
-    </header>
-    <div class="controls">
-        <div class="controls-grid">
-            <div class="control-group">
-                <label for="searchTitle">Titre</label>
-                <input type="text" id="searchTitle" placeholder="Rechercher...">
-            </div>
-            <div class="control-group">
-                <label for="filterYearMin">Année (de)</label>
-                <input type="number" id="filterYearMin" placeholder="Exemple: 2000">
-            </div>
-            <div class="control-group">
-                <label for="filterYearMax">Année (à)</label>
-                <input type="number" id="filterYearMax" placeholder="Exemple: 2023">
-            </div>
-            <div class="control-group">
-                <label for="filterGenre">Genre</label>
-                <input type="text" id="filterGenre" placeholder="Exemple: Drame">
-            </div>
-            <div class="control-group">
-                <label for="filterPlatform">Plateforme</label>
-                <input type="text" id="filterPlatform" placeholder="Exemple: Netflix">
-            </div>
-            <div class="control-group">
-                <label for="filterDuration">Durée Max</label>
-                <input type="text" id="filterDuration" placeholder="2:30">
-            </div>
-        </div>
-        <div class="button-group">
-            <button onclick="filterFilms()">🔍 Filtrer</button>
-            <button class="secondary" onclick="resetFilters()">↺ Réinitialiser</button>
-            <button class="secondary" onclick="sortAlphabetically()">🔤 Alphabétique</button>
-            <button class="secondary" onclick="sortByYear()">📅 Plus Récent</button>
-            <button class="secondary" onclick="getRandomFilm()">🎲 Aléatoire</button>
-            <button class="secondary" onclick="toggleHideWatched()" id="hideWatchedBtn">👁️ Masquer Vus</button>
-            <button class="secondary" onclick="toggleShowOnlyWatched()" id="onlyWatchedBtn">✅ Afficher Vus</button>
-            <button class="secondary" onclick="removeDuplicates()">🗂️ Doublons</button>
-            <button class="secondary" onclick="document.getElementById('fileInput').click()">📂 Importer</button>
-            <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="handleFileImport(event)">
-        </div>
-    </div>
-    <div class="stats">
-        <div class="stats-container">
-            <div class="stats-left" id="statsLeft">0 films</div>
-            <div class="stats-center">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
-                </div>
-                <div class="progress-percentage" id="progressPercentage">0% complété</div>
-            </div>
-            <div class="stats-right" id="statsRight">0/0 vus</div>
-        </div>
-    </div>
-    <div id="filmsList" class="films-grid"></div>
-</div>
-<div id="filmModal" class="modal-overlay" onclick="closeModal(event)">
-    <div class="modal-card" id="modalCardContent" onclick="event.stopPropagation()"></div>
-</div>
-
 <script>
-let allFilms = [];
-let hideWatchedMode = false;
-let showOnlyWatchedMode = false;
-// ⚠️ REMPLACEZ PAR VOTRE CLÉ API v3
-const TMDB_API_KEY = '60c056a57daa70ab8cafa7571f604e1c';
-let lastTmdbRequest = 0;
-const MIN_REQUEST_DELAY = 250;
+        // --- CONFIGURATION ---
+        // Votre clé API fournie
+        const TMDB_API_KEY = 'a8b8177cf88f3604d3df137469205626'; 
+        let allFilms = [];
+        let hideWatchedMode = false;
+        let showOnlyWatchedMode = false;
 
-async function getTMDbPoster(title, year) {
-    try {
-        const timeSinceLastRequest = Date.now() - lastTmdbRequest;
-        if (timeSinceLastRequest < MIN_REQUEST_DELAY) {
-            await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_DELAY - timeSinceLastRequest));
-        }
-        lastTmdbRequest = Date.now();
-        const response = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&year=${year}&language=fr-FR`, {
-            headers: { 'accept': 'application/json' }
-        });
-        if (!response.ok) {
-            console.warn(`TMDb erreur HTTP ${response.status} pour "${title}"`);
+        // --- FONCTIONS API TMDB ---
+
+        // Fonction unique et optimisée pour récupérer le poster
+        async function fetchTMDbPoster(title, year) {
+            try {
+                // On nettoie le titre pour la recherche (enlève les caractères spéciaux parfois gênants)
+                const cleanTitle = title.trim();
+                
+                // On demande les résultats en français
+                const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanTitle)}&year=${year}&language=fr-FR`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    // On prend le premier résultat qui a une image
+                    const bestMatch = data.results.find(m => m.poster_path) || data.results[0];
+                    if (bestMatch.poster_path) {
+                        return `https://image.tmdb.org/t/p/w500${bestMatch.poster_path}`;
+                    }
+                }
+            } catch (error) {
+                console.error(`Erreur TMDb pour ${title}:`, error);
+            }
             return null;
         }
-        const data = await response.json();
-        if (data.results && data.results.length > 0 && data.results[0].poster_path) {
-            const posterUrl = `https://image.tmdb.org/t/p/w500${data.results[0].poster_path}`;
-            console.log(`✓ Poster trouvé: ${title}`);
-            return posterUrl;
-        }
-    } catch (error) {
-        console.error('Erreur TMDb:', title, error);
-    }
-    return null;
-}
 
-function loadFilmsFromStorage() {
-    try {
-        const stored = localStorage.getItem('cinema_films');
-        if (stored) {
-            allFilms = JSON.parse(stored);
-            const sortedFilms = [...allFilms].sort((a, b) => parseInt(b.year) - parseInt(a.year));
-            displayFilms(sortedFilms);
-            updateStats();
-        } else {
-            updateStats();
-        }
-    } catch (error) {
-        console.error('Erreur:', error);
-        allFilms = [];
-    }
-}
+        // Cette fonction est appelée si l'image par défaut échoue ou si on force le chargement API
+        function tryTMDbPoster(imgElement, title, year) {
+            // Évite une boucle infinie si l'API échoue aussi
+            imgElement.onerror = null; 
 
-function saveFilmsToStorage() {
-    try {
-        localStorage.setItem('cinema_films', JSON.stringify(allFilms));
-    } catch (error) {
-        console.error('Erreur de sauvegarde:', error);
-    }
-}
-
-function parseFilmsFromText(text) {
-    const lines = text.split('\n').filter(line => line.trim());
-    return lines.map(line => {
-        const parts = line.split('\t').map(p => p.trim());
-        if (parts.length < 5) return null;
-        return {
-            title: parts[0],
-            year: parts[1],
-            duration: parts[2],
-            awards: parts[3] ? [parts[3]] : [],
-            genres: parts[4] ? parts[4].split(',').map(g => g.trim()).filter(g => g) : [],
-            platform: parts[5] || '',
-            posterUrl: parts[6] || '',
-            watched: false
-        };
-    }).filter(f => f && f.title);
-}
-
-function displayFilms(films) {
-    const list = document.getElementById('filmsList');
-    if (films.length === 0) {
-        list.innerHTML = '<div class="empty-message">Aucun film ne correspond à vos critères</div>';
-        return;
-    }
-    list.innerHTML = films.map((film) => {
-        const bgColor = generateColorFromTitle(film.title);
-        const realIndex = allFilms.findIndex(f => f.title === film.title && f.year === film.year);
-        let posterContent = `<span style="color: #d4af37; font-weight: bold; font-size: 1.5em; padding: 10px; text-align: center;">${film.title}</span>`;
-        if (film.posterUrl && film.posterUrl.trim() && film.posterUrl.startsWith('http')) {
-            posterContent = `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="fetchTMDbPosterFallback(this, '${film.title.replace(/'/g, "\\'")}', ${film.year})" onload="this.style.opacity=1">`;
-        }
-        return `
-            <div class="film-card ${film.watched ? 'watched' : ''}" onmouseenter="setCinemaHalo(this, '${bgColor[0]}')" onmouseleave="resetCinemaHalo()" onclick="openModal(${realIndex})">
-                <div class="film-poster" style="background: linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]});">
-                    ${posterContent}
-                </div>
-                <div class="film-info-section">
-                    <div class="watched-checkbox" onclick="event.stopPropagation()">
-                        <input type="checkbox" id="checkbox-${realIndex}" ${film.watched ? 'checked' : ''} onchange="toggleWatched(${realIndex})">
-                        <label for="checkbox-${realIndex}">Vu</label>
-                    </div>
-                    <div class="film-title" style="${film.watched ? 'opacity: 0.7;' : ''}">${film.title}</div>
-                    <div class="film-info">
-                        <div class="info-item"><div class="info-label">Année</div><div class="info-value">${film.year}</div></div>
-                        <div class="info-item"><div class="info-label">Durée</div><div class="info-value">${film.duration}</div></div>
-                    </div>
-                    ${film.genres.length > 0 ? `<div class="genres">${film.genres.slice(0, 3).map(g => `<span class="genre-tag">${g}</span>`).join('')}${film.genres.length > 3 ? `<span class="genre-tag">+${film.genres.length - 3}</span>` : ''}</div>` : ''}
-                    <div class="action-buttons">
-                        <button onclick="event.stopPropagation(); checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn">Où Regarder</button>
-                        <button onclick="event.stopPropagation(); deleteFilm(${realIndex})" class="delete-btn">✕</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-async function fetchTMDbPosterFallback(imgElement, title, year) {
-    const posterUrl = await getTMDbPoster(title, year);
-    if (posterUrl) {
-        imgElement.src = posterUrl;
-        imgElement.style.opacity = '1';
-    } else {
-        imgElement.style.display = 'none';
-        imgElement.parentElement.innerHTML = `<span style="color: #d4af37; font-weight: bold; font-size: 1.5em; padding: 10px; text-align: center;">${title}</span>`;
-    }
-}
-
-function openModal(index) {
-    const film = allFilms[index];
-    const modal = document.getElementById('filmModal');
-    const content = document.getElementById('modalCardContent');
-    const bgColor = generateColorFromTitle(film.title);
-    let posterContent = `<div style="width:100%; height:100%; background: linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]}); display:flex; align-items:center; justify-content:center;"><span style="color:#d4af37; font-size:2em; font-weight:bold; text-align:center; padding:20px;">${film.title}</span></div>`;
-    if (film.posterUrl && film.posterUrl.trim() && film.posterUrl.startsWith('http')) {
-        posterContent = `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="fetchTMDbPosterFallback(this, '${film.title.replace(/'/g, "\\'")}', ${film.year})">`;
-    }
-    const validAwards = film.awards.filter(a => !a.includes('http') && !a.includes('://'));
-    content.innerHTML = `
-        <button class="modal-close" onclick="closeModal(event)">×</button>
-        <div class="modal-poster">${posterContent}</div>
-        <div class="modal-info">
-            <h2 style="font-family:'Playfair Display', serif; font-size: 2.5em; color: #d4af37; margin-bottom: 10px;">${film.title}</h2>
-            <div style="color: #b8956a; font-size: 1.1em; margin-bottom: 20px;">
-                ${film.year} • ${film.duration} ${film.platform ? '• ' + film.platform : ''}
-            </div>
-            <div style="margin-bottom: 25px;">
-                ${film.genres.map(g => `<span class="genre-tag" style="font-size: 0.9em; padding: 6px 12px; margin-right: 8px;">${g}</span>`).join('')}
-            </div>
-            ${validAwards.length > 0 ? `
-                <div style="margin-bottom: 25px; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 4px; border: 1px solid rgba(212, 175, 55, 0.2);">
-                    <h3 style="color: #d4af37; font-size: 0.9em; text-transform: uppercase; margin-bottom: 10px;">Récompenses</h3>
-                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                        ${validAwards.map(a => `<span style="background: linear-gradient(135deg, #d4af37 0%, #c9a961 100%); color: #1a1f3a; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 700;">🏆 ${a}</span>`).join('')}
-                    </div>
-                </div>
-            ` : ''}
-            <div style="margin-top: 30px;">
-                <button onclick="checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn" style="padding: 15px 30px; font-size: 1em; width: 100%;">
-                    🎥 Voir les options de streaming
-                </button>
-            </div>
-        </div>
-    `;
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModal(event) {
-    if (event) event.stopPropagation();
-    const modal = document.getElementById('filmModal');
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-document.addEventListener('keydown', function(event) {
-    if (event.key === "Escape") closeModal();
-});
-
-function updateStats() {
-    const watched = allFilms.filter(f => f.watched).length;
-    const total = allFilms.length;
-    const percentage = total > 0 ? Math.round((watched / total) * 100) : 0;
-    document.getElementById('statsLeft').textContent = total + ' film' + (total > 1 ? 's' : '');
-    document.getElementById('progressFill').style.width = percentage + '%';
-    document.getElementById('progressPercentage').textContent = percentage + '% complété';
-    document.getElementById('statsRight').textContent = watched + '/' + total + ' vus';
-}
-
-function filterFilms() {
-    const title = document.getElementById('searchTitle').value.toLowerCase();
-    const yearMin = document.getElementById('filterYearMin').value;
-    const yearMax = document.getElementById('filterYearMax').value;
-    const genre = document.getElementById('filterGenre').value.toLowerCase();
-    const platform = document.getElementById('filterPlatform').value.toLowerCase();
-    const durationMax = document.getElementById('filterDuration').value.trim();
-    let filtered = allFilms.filter(film => {
-        const matchTitle = film.title.toLowerCase().includes(title);
-        let matchYear = true;
-        if (yearMin || yearMax) {
-            const filmYear = parseInt(film.year);
-            if (yearMin && filmYear < parseInt(yearMin)) matchYear = false;
-            if (yearMax && filmYear > parseInt(yearMax)) matchYear = false;
-        }
-        const matchGenre = !genre || film.genres.some(g => g.toLowerCase().includes(genre));
-        const matchPlatform = !platform || film.platform.toLowerCase().includes(platform);
-        let matchDuration = true;
-        if (durationMax) {
-            const maxMinutes = convertToMinutes(durationMax);
-            const filmMinutes = convertToMinutes(film.duration);
-            matchDuration = filmMinutes <= maxMinutes;
-        }
-        return matchTitle && matchYear && matchGenre && matchPlatform && matchDuration;
-    });
-    if (hideWatchedMode) filtered = filtered.filter(film => !film.watched);
-    else if (showOnlyWatchedMode) filtered = filtered.filter(film => film.watched);
-    const sortedFilms = filtered.sort((a, b) => parseInt(b.year) - parseInt(a.year));
-    displayFilms(sortedFilms);
-    updateStats();
-}
-
-function resetFilters() {
-    document.getElementById('searchTitle').value = '';
-    document.getElementById('filterYearMin').value = '';
-    document.getElementById('filterYearMax').value = '';
-    document.getElementById('filterGenre').value = '';
-    document.getElementById('filterPlatform').value = '';
-    document.getElementById('filterDuration').value = '';
-    hideWatchedMode = false;
-    showOnlyWatchedMode = false;
-    document.getElementById('hideWatchedBtn').className = 'secondary';
-    document.getElementById('hideWatchedBtn').textContent = '👁️ Masquer Vus';
-    document.getElementById('onlyWatchedBtn').className = 'secondary';
-    document.getElementById('onlyWatchedBtn').textContent = '✅ Afficher Vus';
-    const sortedFilms = allFilms.sort((a, b) => parseInt(b.year) - parseInt(a.year));
-    displayFilms(sortedFilms);
-    updateStats();
-}
-
-function getRandomFilm() {
-    if (allFilms.length === 0) { alert('Aucun film dans la collection'); return; }
-    const random = allFilms[Math.floor(Math.random() * allFilms.length)];
-    displayFilms([random]);
-    updateStats();
-}
-
-function handleFileImport(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const content = e.target.result;
-            const newFilms = parseFilmsFromText(content);
-            if (newFilms.length === 0) { alert('Aucun film valide trouvé dans le fichier'); return; }
-            let replacedCount = 0;
-            newFilms.forEach(newFilm => {
-                const existingIndex = allFilms.findIndex(f => f.title === newFilm.title && f.year === newFilm.year);
-                if (existingIndex !== -1) {
-                    newFilm.watched = allFilms[existingIndex].watched;
-                    allFilms[existingIndex] = newFilm;
-                    replacedCount++;
+            fetchTMDbPoster(title, year).then(posterUrl => {
+                if (posterUrl) {
+                    imgElement.src = posterUrl;
+                    imgElement.style.opacity = '1';
                 } else {
-                    allFilms.push(newFilm);
+                    // Si aucune image trouvée, on cache l'image et on affiche le titre texte
+                    imgElement.style.display = 'none';
+                    // On recrée le titre texte à la place
+                    const container = imgElement.parentElement;
+                    container.innerHTML = `<span style="color: #d4af37; font-weight: bold; font-size: 1.5em; line-height: 1.3; padding: 10px; text-align: center; display: block;">${title}</span>`;
                 }
             });
-            resetFilters();
-            alert(`✔ Import terminé!\n📂 ${replacedCount} film(s) mis à jour\n➕ ${newFilms.length - replacedCount} film(s) ajoutés\nTotal: ${allFilms.length} film(s)`);
+        }
+
+        // --- GESTION DES DONNÉES ---
+
+        function loadFilmsFromStorage() {
+            try {
+                const stored = localStorage.getItem('cinema_films');
+                if (stored) {
+                    allFilms = JSON.parse(stored);
+                    // Tri par année décroissante par défaut
+                    allFilms.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+                    displayFilms(allFilms);
+                    updateStats();
+                } else {
+                    updateStats();
+                }
+            } catch (error) {
+                console.error('Erreur chargement storage:', error);
+                allFilms = [];
+            }
+        }
+
+        function saveFilmsToStorage() {
+            try {
+                localStorage.setItem('cinema_films', JSON.stringify(allFilms));
+            } catch (error) {
+                console.error('Erreur sauvegarde:', error);
+            }
+        }
+
+        function parseFilmsFromText(text) {
+            const lines = text.split('\n').filter(line => line.trim());
+            return lines.map(line => {
+                const parts = line.split('\t').map(p => p.trim());
+                
+                if (parts.length < 2) return null; // Sécurité minimale
+                
+                const title = parts[0];
+                const year = parts[1];
+                const duration = parts[2] || '';
+                const awardText = parts[3] || '';
+                const genreText = parts[4] || '';
+                const platform = parts[5] || '';
+                const posterUrl = parts[6] || '';
+                
+                const genres = genreText ? genreText.split(',').map(g => g.trim()).filter(g => g) : [];
+                const awards = awardText ? [awardText] : []; // Simplification basée sur votre format
+                
+                return {
+                    title, year, duration, awards, genres, platform, posterUrl,
+                    watched: false
+                };
+            }).filter(f => f && f.title);
+        }
+
+        // --- AFFICHAGE ---
+
+        function displayFilms(films) {
+            const list = document.getElementById('filmsList');
+
+            if (films.length === 0) {
+                list.innerHTML = '<div class="empty-message">Aucun film ne correspond à vos critères</div>';
+                return;
+            }
+
+            list.innerHTML = films.map((film, index) => {
+                // Trouver l'index réel dans allFilms pour les actions (delete, toggle)
+                const realIndex = allFilms.indexOf(film);
+                const bgColor = generateColorFromTitle(film.title);
+                
+                // Logique Image : 
+                // 1. Si pas d'URL ou URL en http (bloqué par GitHub), on force l'appel API via l'image vide + onerror
+                // 2. Sinon on utilise l'URL HTTPS existante
+                let imgTag = '';
+                
+                // Vérification stricte : si c'est du HTTP simple, on considère que c'est invalide pour GitHub Pages
+                const isHttp = film.posterUrl && film.posterUrl.toLowerCase().startsWith('http:');
+                const hasUrl = film.posterUrl && film.posterUrl.trim().length > 0;
+
+                if (hasUrl && !isHttp) {
+                    // C'est du HTTPS, on tente de l'afficher directement
+                    imgTag = `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
+                } else {
+                    // C'est du HTTP ou vide : on met une image vide qui va déclencher onerror immédiatement pour appeler l'API
+                    imgTag = `<img src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
+                }
+
+                return `
+                <div class="film-card ${film.watched ? 'watched' : ''}"
+                     onmouseenter="setCinemaHalo(this, '${bgColor[0]}')"
+                     onmouseleave="resetCinemaHalo()"
+                     onclick="openModal(${realIndex})">
+                    <div class="film-poster" style="background: linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]});">
+                        ${imgTag}
+                    </div>
+                    <div class="film-info-section">
+                        <div class="watched-checkbox" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="checkbox-${realIndex}" ${film.watched ? 'checked' : ''} onchange="toggleWatched(${realIndex})">
+                            <label for="checkbox-${realIndex}">Vu</label>
+                        </div>
+                        <div class="film-title">${film.title}</div>
+                        <div class="film-info">
+                            <div class="info-item">
+                                <div class="info-label">Année</div>
+                                <div class="info-value">${film.year}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Durée</div>
+                                <div class="info-value">${film.duration}</div>
+                            </div>
+                        </div>
+                        ${film.genres.length > 0 ? `
+                            <div class="genres">
+                                ${film.genres.slice(0, 3).map(g => `<span class="genre-tag">${g}</span>`).join('')}
+                                ${film.genres.length > 3 ? `<span class="genre-tag">+${film.genres.length - 3}</span>` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="action-buttons">
+                            <button onclick="event.stopPropagation(); checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn">Où Regarder</button>
+                            <button onclick="event.stopPropagation(); deleteFilm(${realIndex})" class="delete-btn">✕</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        function openModal(index) {
+            const film = allFilms[index];
+            const modal = document.getElementById('filmModal');
+            const content = document.getElementById('modalCardContent');
+            const bgColor = generateColorFromTitle(film.title);
+
+            // Même logique que pour la liste : forcer l'API si HTTP
+            const isHttp = film.posterUrl && film.posterUrl.toLowerCase().startsWith('http:');
+            const hasUrl = film.posterUrl && film.posterUrl.trim().length > 0;
+            
+            let posterContent;
+            if (hasUrl && !isHttp) {
+                posterContent = `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
+            } else {
+                posterContent = `<img src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
+            }
+
+            const validAwards = film.awards.filter(a => !a.includes('http'));
+
+            content.innerHTML = `
+                <button class="modal-close" onclick="closeModal(event)">×</button>
+                <div class="modal-poster" style="background: linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]});">
+                    ${posterContent}
+                </div>
+                <div class="modal-info">
+                    <h2 style="font-family:'Playfair Display', serif; font-size: 2.5em; color: #d4af37; margin-bottom: 10px;">${film.title}</h2>
+                    <div style="color: #b8956a; font-size: 1.1em; margin-bottom: 20px;">
+                        ${film.year} • ${film.duration} ${film.platform ? '• ' + film.platform : ''}
+                    </div>
+                    
+                    <div style="margin-bottom: 25px;">
+                        ${film.genres.map(g => `<span class="genre-tag" style="font-size: 0.9em; padding: 6px 12px; margin-right: 8px;">${g}</span>`).join('')}
+                    </div>
+
+                    ${validAwards.length > 0 ? `
+                        <div style="margin-bottom: 25px; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 4px; border: 1px solid rgba(212, 175, 55, 0.2);">
+                            <h3 style="color: #d4af37; font-size: 0.9em; text-transform: uppercase; margin-bottom: 10px;">Récompenses</h3>
+                            <div class="awards">
+                                ${validAwards.map(a => `<span class="award-badge" style="font-size: 0.8em;">🏆 ${a}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div style="margin-top: 30px; display: flex; gap: 15px;">
+                        <button onclick="checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn" style="padding: 15px 30px; font-size: 1em;">
+                            🎥 Voir les options de streaming
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(event) {
+            if (event) event.stopPropagation();
+            const modal = document.getElementById('filmModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // --- FILTRES ET UTILITAIRES ---
+
+        function updateStats() {
+            const watched = allFilms.filter(f => f.watched).length;
+            const total = allFilms.length;
+            const percentage = total > 0 ? Math.round((watched / total) * 100) : 0;
+            
+            document.getElementById('statsLeft').textContent = total + ' film' + (total > 1 ? 's' : '');
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressPercentage').textContent = percentage + '% complété';
+            document.getElementById('statsRight').textContent = watched + '/' + total + ' vus';
+        }
+
+        function filterFilms() {
+            const title = document.getElementById('searchTitle').value.toLowerCase();
+            const yearMin = document.getElementById('filterYearMin').value;
+            const yearMax = document.getElementById('filterYearMax').value;
+            const genre = document.getElementById('filterGenre').value.toLowerCase();
+            const platform = document.getElementById('filterPlatform').value.toLowerCase();
+            const durationMax = document.getElementById('filterDuration').value.trim();
+
+            let filtered = allFilms.filter(film => {
+                const matchTitle = film.title.toLowerCase().includes(title);
+                
+                let matchYear = true;
+                const filmYear = parseInt(film.year);
+                if (yearMin && filmYear < parseInt(yearMin)) matchYear = false;
+                if (yearMax && filmYear > parseInt(yearMax)) matchYear = false;
+                
+                const matchGenre = !genre || film.genres.some(g => g.toLowerCase().includes(genre));
+                const matchPlatform = !platform || film.platform.toLowerCase().includes(platform);
+                
+                let matchDuration = true;
+                if (durationMax) {
+                    const maxMinutes = convertToMinutes(durationMax);
+                    const filmMinutes = convertToMinutes(film.duration);
+                    if (filmMinutes === 0) matchDuration = true; // Si pas de durée, on garde
+                    else matchDuration = filmMinutes <= maxMinutes;
+                }
+                
+                return matchTitle && matchYear && matchGenre && matchPlatform && matchDuration;
+            });
+
+            if (hideWatchedMode) filtered = filtered.filter(f => !f.watched);
+            if (showOnlyWatchedMode) filtered = filtered.filter(f => f.watched);
+
+            // Tri par année par défaut pour le résultat filtré
+            filtered.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+            displayFilms(filtered);
+            updateStats();
+        }
+
+        function resetFilters() {
+            document.querySelectorAll('.controls input').forEach(i => i.value = '');
+            hideWatchedMode = false;
+            showOnlyWatchedMode = false;
+            
+            const hideBtn = document.getElementById('hideWatchedBtn');
+            const onlyBtn = document.getElementById('onlyWatchedBtn');
+            
+            if(hideBtn) { hideBtn.className = 'secondary'; hideBtn.textContent = '👁️ Masquer Vus'; }
+            if(onlyBtn) { onlyBtn.className = 'secondary'; onlyBtn.textContent = '✅ Afficher Vus'; }
+            
+            allFilms.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+            displayFilms(allFilms);
+            updateStats();
+        }
+
+        function getRandomFilm() {
+            if (allFilms.length === 0) return alert('Aucun film dans la collection');
+            const random = allFilms[Math.floor(Math.random() * allFilms.length)];
+            displayFilms([random]);
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const newFilms = parseFilmsFromText(e.target.result);
+                    if (newFilms.length === 0) return alert('Aucun film valide trouvé');
+
+                    let addedCount = 0;
+                    let updatedCount = 0;
+
+                    newFilms.forEach(newFilm => {
+                        // On vérifie si le film existe déjà (Titre + Année)
+                        const existing = allFilms.find(f => f.title === newFilm.title && f.year === newFilm.year);
+                        if (existing) {
+                            // On met à jour les infos mais on garde le statut "Vu"
+                            const wasWatched = existing.watched;
+                            Object.assign(existing, newFilm);
+                            existing.watched = wasWatched;
+                            updatedCount++;
+                        } else {
+                            allFilms.push(newFilm);
+                            addedCount++;
+                        }
+                    });
+
+                    resetFilters();
+                    alert(`Import terminé !\n🆕 ${addedCount} ajoutés\n🔄 ${updatedCount} mis à jour`);
+                    saveFilmsToStorage();
+                    document.getElementById('fileInput').value = '';
+                } catch (error) {
+                    alert('Erreur lecture fichier: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- OUTILS ---
+
+        function checkJustWatch(title, year) {
+            // Création d'un slug propre pour JustWatch
+            let urlTitle = title.toLowerCase().trim()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Enlève les accents
+                .replace(/[^a-z0-9\s-]/g, '') // Enlève les caractères spéciaux
+                .replace(/\s+/g, '-') // Remplace les espaces par des tirets
+                .replace(/-+/g, '-'); // Évite les doubles tirets
+            
+            window.open(`https://www.justwatch.com/fr/recherche?q=${encodeURIComponent(title)}`, '_blank');
+        }
+
+        function convertToMinutes(duration) {
+            if (!duration) return 0;
+            const parts = duration.split(':');
+            if (parts.length === 2) return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            return parseInt(duration) || 0;
+        }
+
+        function toggleWatched(index) {
+            allFilms[index].watched = !allFilms[index].watched;
             saveFilmsToStorage();
-            document.getElementById('fileInput').value = '';
-        } catch (error) {
-            alert('Erreur lors de la lecture du fichier: ' + error.message);
+            updateStats();
+            // On ne rafraichit la liste que si on est en mode filtre actif pour éviter de perdre le scroll
+            if (hideWatchedMode || showOnlyWatchedMode) filterFilms();
         }
-    };
-    reader.readAsText(file);
-}
 
-function checkJustWatch(title, year) {
-    let urlTitle = title.toLowerCase().trim()
-        .replace(/[àâä]/g, 'a').replace(/[éèêë]/g, 'e').replace(/[îï]/g, 'i')
-        .replace(/[ôö]/g, 'o').replace(/[ûü]/g, 'u').replace(/[ç]/g, 'c')
-        .replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-    const justwatchUrl = `https://www.justwatch.com/fr/film/${urlTitle}`;
-    window.open(justwatchUrl, '_blank');
-}
-
-function convertToMinutes(duration) {
-    if (!duration) return 0;
-    const parts = duration.split(':');
-    if (parts.length === 2) return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-    return parseInt(duration);
-}
-
-function toggleWatched(index) {
-    allFilms[index].watched = !allFilms[index].watched;
-    saveFilmsToStorage();
-    filterFilms();
-    updateStats();
-}
-
-function deleteFilm(index) {
-    const film = allFilms[index];
-    if (confirm(`Êtes-vous sûr de vouloir supprimer "${film.title}" ?`)) {
-        allFilms.splice(index, 1);
-        saveFilmsToStorage();
-        filterFilms();
-        updateStats();
-        alert('Film supprimé avec succès !');
-    }
-}
-
-function toggleHideWatched() {
-    hideWatchedMode = !hideWatchedMode;
-    showOnlyWatchedMode = false;
-    const btn = document.getElementById('hideWatchedBtn');
-    const onlyBtn = document.getElementById('onlyWatchedBtn');
-    if (hideWatchedMode) {
-        btn.className = '';
-        btn.textContent = '👁️ Afficher Tous';
-    } else {
-        btn.className = 'secondary';
-        btn.textContent = '👁️ Masquer Vus';
-    }
-    onlyBtn.className = 'secondary';
-    onlyBtn.textContent = '✅ Afficher Vus';
-    filterFilms();
-}
-
-function toggleShowOnlyWatched() {
-    showOnlyWatchedMode = !showOnlyWatchedMode;
-    hideWatchedMode = false;
-    const btn = document.getElementById('onlyWatchedBtn');
-    const hideBtn = document.getElementById('hideWatchedBtn');
-    if (showOnlyWatchedMode) {
-        btn.className = '';
-        btn.textContent = '✅ Afficher Tous';
-    } else {
-        btn.className = 'secondary';
-        btn.textContent = '✅ Afficher Vus';
-    }
-    hideBtn.className = 'secondary';
-    hideBtn.textContent = '👁️ Masquer Vus';
-    filterFilms();
-}
-
-function removeDuplicates() {
-    const seen = new Set();
-    const uniqueFilms = [];
-    let duplicateCount = 0;
-    for (let i = 0; i < allFilms.length; i++) {
-        const key = `${allFilms[i].title}|${allFilms[i].year}`;
-        if (!seen.has(key)) {
-            seen.add(key);
-            uniqueFilms.push(allFilms[i]);
-        } else {
-            duplicateCount++;
+        function deleteFilm(index) {
+            if (confirm(`Supprimer "${allFilms[index].title}" ?`)) {
+                allFilms.splice(index, 1);
+                saveFilmsToStorage();
+                filterFilms();
+                alert('Film supprimé.');
+            }
         }
-    }
-    allFilms = uniqueFilms;
-    saveFilmsToStorage();
-    resetFilters();
-    alert(`✔ ${duplicateCount} doublon(s) supprimé(s)!\nTotal: ${allFilms.length} film(s)`);
-}
 
-function goHome() {
-    resetFilters();
-    window.scrollTo(0, 0);
-}
+        function toggleHideWatched() {
+            hideWatchedMode = !hideWatchedMode;
+            showOnlyWatchedMode = false;
+            
+            const btn = document.getElementById('hideWatchedBtn');
+            const onlyBtn = document.getElementById('onlyWatchedBtn');
+            
+            btn.className = hideWatchedMode ? '' : 'secondary';
+            btn.textContent = hideWatchedMode ? '👁️ Afficher Tous' : '👁️ Masquer Vus';
+            
+            onlyBtn.className = 'secondary';
+            onlyBtn.textContent = '✅ Afficher Vus';
+            
+            filterFilms();
+        }
 
-function sortAlphabetically() {
-    const sorted = [...allFilms].sort((a, b) => a.title.localeCompare(b.title, 'fr'));
-    displayFilms(sorted);
-}
+        function toggleShowOnlyWatched() {
+            showOnlyWatchedMode = !showOnlyWatchedMode;
+            hideWatchedMode = false;
+            
+            const btn = document.getElementById('onlyWatchedBtn');
+            const hideBtn = document.getElementById('hideWatchedBtn');
+            
+            btn.className = showOnlyWatchedMode ? '' : 'secondary';
+            btn.textContent = showOnlyWatchedMode ? '✅ Afficher Tous' : '✅ Afficher Vus';
+            
+            hideBtn.className = 'secondary';
+            hideBtn.textContent = '👁️ Masquer Vus';
+            
+            filterFilms();
+        }
 
-function sortByYear() {
-    const sorted = [...allFilms].sort((a, b) => parseInt(b.year) - parseInt(a.year));
-    displayFilms(sorted);
-}
+        function removeDuplicates() {
+            const seen = new Set();
+            const uniqueFilms = [];
+            let duplicateCount = 0;
 
-function generateColorFromTitle(title) {
-    let hash = 0;
-    for (let i = 0; i < title.length; i++) hash = title.charCodeAt(i) + ((hash << 5) - hash);
-    const colors = [['#3b82f6', '#1e40af'], ['#8b5cf6', '#5b21b6'], ['#ec4899', '#be185d'],
-        ['#10b981', '#065f46'], ['#f59e0b', '#92400e'], ['#ef4444', '#7f1d1d'],
-        ['#06b6d4', '#0c4a6e'], ['#6366f1', '#312e81'], ['#14b8a6', '#134e4a'],
-        ['#d946ef', '#581c87'], ['#ea580c', '#7c2d12'], ['#0891b2', '#164e63'],
-        ['#7c3aed', '#4c1d95'], ['#059669', '#064e3b']];
-    const index = Math.abs(hash) % colors.length;
-    return colors[index];
-}
+            allFilms.forEach(film => {
+                const key = `${film.title}|${film.year}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueFilms.push(film);
+                } else {
+                    duplicateCount++;
+                }
+            });
 
-function setCinemaHalo(card, color) {
-    const bg = document.getElementById('dynamic-bg');
-    const rect = card.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    bg.style.opacity = '1';
-    bg.style.background = `radial-gradient(circle at ${x}px ${y}px, ${color}66 0%, transparent 85%)`;
-}
+            allFilms = uniqueFilms;
+            saveFilmsToStorage();
+            resetFilters();
+            alert(`✔ ${duplicateCount} doublons supprimés.`);
+        }
 
-function resetCinemaHalo() {
-    const bg = document.getElementById('dynamic-bg');
-    bg.style.opacity = '0.5';
-    bg.style.background = `radial-gradient(circle at center, rgba(212, 175, 55, 0.05) 0%, transparent 70%)`;
-}
+        function goHome() {
+            resetFilters();
+            window.scrollTo(0, 0);
+        }
 
-window.addEventListener('DOMContentLoaded', function() {
-    loadFilmsFromStorage();
-    document.getElementById('searchTitle').addEventListener('keypress', function(e) { if (e.key === 'Enter') filterFilms(); });
-    document.getElementById('filterYearMin').addEventListener('keypress', function(e) { if (e.key === 'Enter') filterFilms(); });
-    document.getElementById('filterYearMax').addEventListener('keypress', function(e) { if (e.key === 'Enter') filterFilms(); });
-    document.getElementById('filterGenre').addEventListener('keypress', function(e) { if (e.key === 'Enter') filterFilms(); });
-    document.getElementById('filterPlatform').addEventListener('keypress', function(e) { if (e.key === 'Enter') filterFilms(); });
-    document.getElementById('filterDuration').addEventListener('keypress', function(e) { if (e.key === 'Enter') filterFilms(); });
-});
-</script>
-</body>
-</html>
+        function sortAlphabetically() {
+            allFilms.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
+            displayFilms(allFilms);
+        }
+
+        function sortByYear() {
+            allFilms.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+            displayFilms(allFilms);
+        }
+
+        // Génère un dégradé de couleur unique basé sur le titre du film
+        function generateColorFromTitle(title) {
+            let hash = 0;
+            for (let i = 0; i < title.length; i++) {
+                hash = title.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            
+            const colors = [
+                ['#3b82f6', '#1e40af'], ['#8b5cf6', '#5b21b6'], ['#ec4899', '#be185d'],
+                ['#10b981', '#065f46'], ['#f59e0b', '#92400e'], ['#ef4444', '#7f1d1d'],
+                ['#06b6d4', '#0c4a6e'], ['#6366f1', '#312e81'], ['#14b8a6', '#134e4a'],
+                ['#d946ef', '#581c87'], ['#ea580c', '#7c2d12'], ['#0891b2', '#164e63'],
+                ['#7c3aed', '#4c1d95'], ['#059669', '#064e3b']
+            ];
+            
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        // Effet de halo dynamique au survol
+        function setCinemaHalo(card, color) {
+            const bg = document.getElementById('dynamic-bg');
+            const rect = card.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+
+            bg.style.opacity = '1';
+            bg.style.background = `radial-gradient(circle at ${x}px ${y}px, ${color}66 0%, transparent 85%)`;
+        }
+
+        function resetCinemaHalo() {
+            const bg = document.getElementById('dynamic-bg');
+            bg.style.opacity = '0.5';
+            bg.style.background = `radial-gradient(circle at center, rgba(212, 175, 55, 0.05) 0%, transparent 70%)`;
+        }
+
+        // Initialisation
+        window.addEventListener('DOMContentLoaded', function() {
+            loadFilmsFromStorage();
+            
+            // Events listeners pour les filtres (touche Entrée)
+            const inputs = ['searchTitle', 'filterYearMin', 'filterYearMax', 'filterGenre', 'filterPlatform', 'filterDuration'];
+            inputs.forEach(id => {
+                document.getElementById(id).addEventListener('keypress', e => {
+                    if (e.key === 'Enter') filterFilms();
+                });
+            });
+            
+            document.addEventListener('keydown', function(event) {
+                if (event.key === "Escape") closeModal();
+            });
+        });
+    </script>
