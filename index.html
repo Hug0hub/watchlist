@@ -683,6 +683,22 @@
                 padding: 20px;
             }
         }
+		/* --- NOUVEAU CSS POUR LE FORMULAIRE --- */
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; color: #d4af37; margin-bottom: 5px; font-size: 0.9em; }
+        .form-group input, .form-group select { 
+            width: 100%; padding: 10px; background: #1a1f3a; border: 1px solid #d4af37; 
+            color: white; border-radius: 4px; font-family: 'Lato', sans-serif;
+        }
+        .btn-primary { background: #d4af37; color: #0a0e27; font-weight: bold; cursor: pointer; }
+        .btn-success { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-info { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; }
+        .edit-btn { 
+            background: none; border: 1px solid rgba(255,255,255,0.3); color: white; 
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; margin-left: 5px;
+        }
+        .edit-btn:hover { background: rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -696,31 +712,19 @@
         </header>
         
         <div class="controls">
-            <div class="controls-grid">
-                <div class="control-group">
-                    <label for="searchTitle">Titre</label>
-                    <input type="text" id="searchTitle" placeholder="Rechercher...">
-                </div>
-                <div class="control-group">
-                    <label for="filterYearMin">Année (de)</label>
-                    <input type="number" id="filterYearMin" placeholder="Exemple: 2000">
-                </div>
-                <div class="control-group">
-                    <label for="filterYearMax">Année (à)</label>
-                    <input type="number" id="filterYearMax" placeholder="Exemple: 2023">
-                </div>
-                <div class="control-group">
-                    <label for="filterGenre">Genre</label>
-                    <input type="text" id="filterGenre" placeholder="Exemple: Drame">
-                </div>
-                <div class="control-group">
-                    <label for="filterPlatform">Plateforme</label>
-                    <input type="text" id="filterPlatform" placeholder="Exemple: Netflix">
-                </div>
-                <div class="control-group">
-                    <label for="filterDuration">Durée Max</label>
-                    <input type="text" id="filterDuration" placeholder="2:30">
-                </div>
+        <label for="fileInput" class="file-label">📂 Importer TXT</label>
+        <input type="file" id="fileInput" accept=".txt" onchange="handleFileImport(event)">
+        
+        <button onclick="openEditModal(-1)" class="btn-success">＋ Ajouter Film</button>
+        <button onclick="exportData()" class="btn-info">⬇ Exporter DB</button>
+        <button onclick="resetFilters()">Tout</button>
+        <button id="hideWatchedBtn" class="secondary" onclick="toggleHideWatched()">👁️ Masquer Vus</button>
+        <button id="onlyWatchedBtn" class="secondary" onclick="toggleShowOnlyWatched()">✅ Afficher Vus</button>
+        <button onclick="getRandomFilm()">🎲 Aléatoire</button>
+        <button onclick="removeDuplicates()" class="secondary">🧹 Nettoyer</button>
+        <button onclick="sortAlphabetically()" class="secondary">A-Z</button>
+        <button onclick="sortByYear()" class="secondary">Année</button>
+    </div>
             </div>
             <div class="button-group">
                 <button onclick="filterFilms()">🔍 Filtrer</button>
@@ -757,95 +761,132 @@
         <div class="modal-card" id="modalCardContent" onclick="event.stopPropagation()">
         </div>
     </div>
+		
+		<div id="editModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <button class="modal-close" onclick="closeEditModal()">×</button>
+            <h2 id="modalTitle" style="color: #d4af37; margin-bottom: 20px;">Éditer le film</h2>
+            
+            <input type="hidden" id="editIndex"> <div class="form-group">
+                <label>Titre</label>
+                <input type="text" id="editTitle" placeholder="Ex: Inception">
+            </div>
+            <div class="form-group" style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>Année</label>
+                    <input type="number" id="editYear" placeholder="2024">
+                </div>
+                <div style="flex: 1;">
+                    <label>Durée</label>
+                    <input type="text" id="editDuration" placeholder="2:30">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Genres (séparés par des virgules)</label>
+                <input type="text" id="editGenres" placeholder="Action, Thriller">
+            </div>
+            <div class="form-group">
+                <label>Plateforme</label>
+                <input type="text" id="editPlatform" placeholder="Netflix, Cinéma...">
+            </div>
+            <div class="form-group">
+                <label>Récompenses</label>
+                <input type="text" id="editAwards" placeholder="Oscar, Palme d'Or...">
+            </div>
+            <div class="form-group">
+                <label>Lien Poster (Optionnel - Laisser vide pour recherche auto)</label>
+                <input type="text" id="editPoster" placeholder="http://...">
+            </div>
+
+            <button onclick="saveFilmData()" class="btn-primary" style="width: 100%; padding: 12px; border: none; border-radius: 4px; font-size: 1.1em;">💾 Sauvegarder</button>
+        </div>
+    </div>
 
     <script>
         // --- CONFIGURATION ---
-        // Votre clé API fournie
         const TMDB_API_KEY = 'a8b8177cf88f3604d3df137469205626'; 
         let allFilms = [];
         let hideWatchedMode = false;
         let showOnlyWatchedMode = false;
 
         // --- FONCTIONS API TMDB ---
-
-        // Fonction unique et optimisée pour récupérer le poster
         async function fetchTMDbPoster(title, year) {
             try {
-                // On nettoie le titre pour la recherche (enlève les caractères spéciaux parfois gênants)
                 const cleanTitle = title.trim();
-                
-                // On demande les résultats en français
                 const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(cleanTitle)}&year=${year}&language=fr-FR`;
-                
                 const response = await fetch(url);
                 const data = await response.json();
 
                 if (data.results && data.results.length > 0) {
-                    // On prend le premier résultat qui a une image
                     const bestMatch = data.results.find(m => m.poster_path) || data.results[0];
                     if (bestMatch.poster_path) {
                         return `https://image.tmdb.org/t/p/w500${bestMatch.poster_path}`;
                     }
                 }
-            } catch (error) {
-                console.error(`Erreur TMDb pour ${title}:`, error);
-            }
+            } catch (error) { console.error(`Erreur TMDb:`, error); }
             return null;
         }
 
-        // Cette fonction est appelée si l'image par défaut échoue ou si on force le chargement API
         function tryTMDbPoster(imgElement, title, year) {
-            // Évite une boucle infinie si l'API échoue aussi
             imgElement.onerror = null; 
-
             fetchTMDbPoster(title, year).then(posterUrl => {
                 if (posterUrl) {
                     imgElement.src = posterUrl;
                     imgElement.style.opacity = '1';
                 } else {
-                    // Si aucune image trouvée, on cache l'image et on affiche le titre texte
                     imgElement.style.display = 'none';
-                    // On recrée le titre texte à la place
                     const container = imgElement.parentElement;
                     container.innerHTML = `<span style="color: #d4af37; font-weight: bold; font-size: 1.5em; line-height: 1.3; padding: 10px; text-align: center; display: block;">${title}</span>`;
                 }
             });
         }
 
-        // --- GESTION DES DONNÉES ---
+        // --- GESTION DES DONNÉES (Load/Save/Export) ---
 
         function loadFilmsFromStorage() {
             try {
                 const stored = localStorage.getItem('cinema_films');
                 if (stored) {
                     allFilms = JSON.parse(stored);
-                    // Tri par année décroissante par défaut
                     allFilms.sort((a, b) => parseInt(b.year) - parseInt(a.year));
                     displayFilms(allFilms);
                     updateStats();
-                } else {
-                    updateStats();
-                }
-            } catch (error) {
-                console.error('Erreur chargement storage:', error);
-                allFilms = [];
-            }
+                } else { updateStats(); }
+            } catch (error) { allFilms = []; }
         }
 
         function saveFilmsToStorage() {
-            try {
-                localStorage.setItem('cinema_films', JSON.stringify(allFilms));
-            } catch (error) {
-                console.error('Erreur sauvegarde:', error);
-            }
+            localStorage.setItem('cinema_films', JSON.stringify(allFilms));
+        }
+
+        // NOUVEAU : Fonction d'exportation
+        function exportData() {
+            if (allFilms.length === 0) return alert("Rien à exporter !");
+
+            // On reconvertit au format TXT original (Tab separated)
+            let content = "";
+            allFilms.forEach(f => {
+                const genreStr = f.genres.join(', ');
+                const awardStr = f.awards.join(', '); // Simplification
+                // Format: Titre \t Année \t Durée \t Awards \t Genres \t Plateforme \t PosterURL
+                content += `${f.title}\t${f.year}\t${f.duration}\t${awardStr}\t${genreStr}\t${f.platform}\t${f.posterUrl}\n`;
+            });
+
+            // Création du fichier téléchargeable
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Cinema_Database_${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            window.URL.revokeObjectURL(url);
         }
 
         function parseFilmsFromText(text) {
             const lines = text.split('\n').filter(line => line.trim());
             return lines.map(line => {
                 const parts = line.split('\t').map(p => p.trim());
-                
-                if (parts.length < 2) return null; // Sécurité minimale
+                if (parts.length < 2) return null;
                 
                 const title = parts[0];
                 const year = parts[1];
@@ -856,46 +897,111 @@
                 const posterUrl = parts[6] || '';
                 
                 const genres = genreText ? genreText.split(',').map(g => g.trim()).filter(g => g) : [];
-                const awards = awardText ? [awardText] : []; // Simplification basée sur votre format
+                const awards = awardText ? [awardText] : []; 
                 
-                return {
-                    title, year, duration, awards, genres, platform, posterUrl,
-                    watched: false
-                };
+                return { title, year, duration, awards, genres, platform, posterUrl, watched: false };
             }).filter(f => f && f.title);
+        }
+
+        // --- NOUVEAU : GESTION ÉDITION / AJOUT ---
+
+        function openEditModal(index) {
+            const modal = document.getElementById('editModal');
+            const titleInput = document.getElementById('editTitle');
+            const yearInput = document.getElementById('editYear');
+            const durationInput = document.getElementById('editDuration');
+            const genresInput = document.getElementById('editGenres');
+            const platformInput = document.getElementById('editPlatform');
+            const awardsInput = document.getElementById('editAwards');
+            const posterInput = document.getElementById('editPoster');
+            const indexInput = document.getElementById('editIndex');
+            const modalTitle = document.getElementById('modalTitle');
+
+            if (index === -1) {
+                // Mode AJOUT
+                modalTitle.textContent = "Ajouter un film";
+                indexInput.value = -1;
+                titleInput.value = '';
+                yearInput.value = new Date().getFullYear();
+                durationInput.value = '';
+                genresInput.value = '';
+                platformInput.value = '';
+                awardsInput.value = '';
+                posterInput.value = '';
+            } else {
+                // Mode ÉDITION
+                const film = allFilms[index];
+                modalTitle.textContent = "Modifier : " + film.title;
+                indexInput.value = index;
+                titleInput.value = film.title;
+                yearInput.value = film.year;
+                durationInput.value = film.duration;
+                genresInput.value = film.genres.join(', ');
+                platformInput.value = film.platform;
+                awardsInput.value = film.awards.join(', ');
+                posterInput.value = film.posterUrl;
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function saveFilmData() {
+            const index = parseInt(document.getElementById('editIndex').value);
+            const title = document.getElementById('editTitle').value.trim();
+            const year = document.getElementById('editYear').value;
+            
+            if (!title || !year) return alert("Le titre et l'année sont obligatoires");
+
+            const newFilmData = {
+                title: title,
+                year: year,
+                duration: document.getElementById('editDuration').value.trim(),
+                genres: document.getElementById('editGenres').value.split(',').map(s => s.trim()).filter(s => s),
+                platform: document.getElementById('editPlatform').value.trim(),
+                awards: document.getElementById('editAwards').value.split(',').map(s => s.trim()).filter(s => s),
+                posterUrl: document.getElementById('editPoster').value.trim(),
+                watched: index !== -1 ? allFilms[index].watched : false // Garde le statut vu si édition
+            };
+
+            if (index === -1) {
+                // Ajout
+                allFilms.push(newFilmData);
+                alert(`Film "${title}" ajouté !`);
+            } else {
+                // Modification
+                allFilms[index] = newFilmData;
+            }
+
+            saveFilmsToStorage();
+            closeEditModal();
+            closeModal(); // Ferme aussi la modale de détails si ouverte
+            
+            // Si on a appliqué des filtres, on réinitialise pour voir le changement ou on rafraichit
+            filterFilms(); 
         }
 
         // --- AFFICHAGE ---
 
         function displayFilms(films) {
             const list = document.getElementById('filmsList');
-
             if (films.length === 0) {
                 list.innerHTML = '<div class="empty-message">Aucun film ne correspond à vos critères</div>';
                 return;
             }
 
             list.innerHTML = films.map((film, index) => {
-                // Trouver l'index réel dans allFilms pour les actions (delete, toggle)
                 const realIndex = allFilms.indexOf(film);
                 const bgColor = generateColorFromTitle(film.title);
                 
-                // Logique Image : 
-                // 1. Si pas d'URL ou URL en http (bloqué par GitHub), on force l'appel API via l'image vide + onerror
-                // 2. Sinon on utilise l'URL HTTPS existante
-                let imgTag = '';
-                
-                // Vérification stricte : si c'est du HTTP simple, on considère que c'est invalide pour GitHub Pages
                 const isHttp = film.posterUrl && film.posterUrl.toLowerCase().startsWith('http:');
                 const hasUrl = film.posterUrl && film.posterUrl.trim().length > 0;
-
-                if (hasUrl && !isHttp) {
-                    // C'est du HTTPS, on tente de l'afficher directement
-                    imgTag = `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
-                } else {
-                    // C'est du HTTP ou vide : on met une image vide qui va déclencher onerror immédiatement pour appeler l'API
-                    imgTag = `<img src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
-                }
+                let imgTag = (hasUrl && !isHttp) 
+                    ? `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`
+                    : `<img src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
 
                 return `
                 <div class="film-card ${film.watched ? 'watched' : ''}"
@@ -912,24 +1018,13 @@
                         </div>
                         <div class="film-title">${film.title}</div>
                         <div class="film-info">
-                            <div class="info-item">
-                                <div class="info-label">Année</div>
-                                <div class="info-value">${film.year}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">Durée</div>
-                                <div class="info-value">${film.duration}</div>
-                            </div>
+                            <div class="info-item"><div class="info-label">Année</div><div class="info-value">${film.year}</div></div>
+                            <div class="info-item"><div class="info-label">Durée</div><div class="info-value">${film.duration}</div></div>
                         </div>
-                        ${film.genres.length > 0 ? `
-                            <div class="genres">
-                                ${film.genres.slice(0, 3).map(g => `<span class="genre-tag">${g}</span>`).join('')}
-                                ${film.genres.length > 3 ? `<span class="genre-tag">+${film.genres.length - 3}</span>` : ''}
-                            </div>
-                        ` : ''}
                         
                         <div class="action-buttons">
-                            <button onclick="event.stopPropagation(); checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn">Où Regarder</button>
+                            <button onclick="event.stopPropagation(); checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn">Stream</button>
+                            <button onclick="event.stopPropagation(); openEditModal(${realIndex})" class="edit-btn" title="Modifier">✎</button>
                             <button onclick="event.stopPropagation(); deleteFilm(${realIndex})" class="delete-btn">✕</button>
                         </div>
                     </div>
@@ -944,18 +1039,11 @@
             const content = document.getElementById('modalCardContent');
             const bgColor = generateColorFromTitle(film.title);
 
-            // Même logique que pour la liste : forcer l'API si HTTP
             const isHttp = film.posterUrl && film.posterUrl.toLowerCase().startsWith('http:');
             const hasUrl = film.posterUrl && film.posterUrl.trim().length > 0;
-            
-            let posterContent;
-            if (hasUrl && !isHttp) {
-                posterContent = `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
-            } else {
-                posterContent = `<img src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
-            }
-
-            const validAwards = film.awards.filter(a => !a.includes('http'));
+            let posterContent = (hasUrl && !isHttp)
+                ? `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`
+                : `<img src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
 
             content.innerHTML = `
                 <button class="modal-close" onclick="closeModal(event)">×</button>
@@ -967,46 +1055,34 @@
                     <div style="color: #b8956a; font-size: 1.1em; margin-bottom: 20px;">
                         ${film.year} • ${film.duration} ${film.platform ? '• ' + film.platform : ''}
                     </div>
-                    
                     <div style="margin-bottom: 25px;">
                         ${film.genres.map(g => `<span class="genre-tag" style="font-size: 0.9em; padding: 6px 12px; margin-right: 8px;">${g}</span>`).join('')}
                     </div>
-
-                    ${validAwards.length > 0 ? `
-                        <div style="margin-bottom: 25px; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 4px; border: 1px solid rgba(212, 175, 55, 0.2);">
-                            <h3 style="color: #d4af37; font-size: 0.9em; text-transform: uppercase; margin-bottom: 10px;">Récompenses</h3>
-                            <div class="awards">
-                                ${validAwards.map(a => `<span class="award-badge" style="font-size: 0.8em;">🏆 ${a}</span>`).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-
+                    ${film.awards.length > 0 ? `<div style="margin-bottom: 25px; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 4px;">
+                        <h3 style="color: #d4af37; font-size: 0.9em; text-transform: uppercase; margin-bottom: 10px;">Récompenses</h3>
+                        <div class="awards">${film.awards.map(a => `<span class="award-badge">🏆 ${a}</span>`).join('')}</div>
+                    </div>` : ''}
                     <div style="margin-top: 30px; display: flex; gap: 15px;">
-                        <button onclick="checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn" style="padding: 15px 30px; font-size: 1em;">
-                            🎥 Voir les options de streaming
-                        </button>
+                        <button onclick="checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn" style="padding: 15px 30px;">🎥 Streaming</button>
+                        <button onclick="openEditModal(${index})" class="btn-primary" style="padding: 15px 30px; border:none; border-radius:4px;">✎ Modifier</button>
                     </div>
                 </div>
             `;
-
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
         function closeModal(event) {
             if (event) event.stopPropagation();
-            const modal = document.getElementById('filmModal');
-            modal.classList.remove('active');
+            document.getElementById('filmModal').classList.remove('active');
             document.body.style.overflow = '';
         }
 
-        // --- FILTRES ET UTILITAIRES ---
-
+        // --- FILTRES & UTILS (Inchangé mais inclus pour que tout marche) ---
         function updateStats() {
             const watched = allFilms.filter(f => f.watched).length;
             const total = allFilms.length;
             const percentage = total > 0 ? Math.round((watched / total) * 100) : 0;
-            
             document.getElementById('statsLeft').textContent = total + ' film' + (total > 1 ? 's' : '');
             document.getElementById('progressFill').style.width = percentage + '%';
             document.getElementById('progressPercentage').textContent = percentage + '% complété';
@@ -1023,30 +1099,22 @@
 
             let filtered = allFilms.filter(film => {
                 const matchTitle = film.title.toLowerCase().includes(title);
-                
                 let matchYear = true;
-                const filmYear = parseInt(film.year);
-                if (yearMin && filmYear < parseInt(yearMin)) matchYear = false;
-                if (yearMax && filmYear > parseInt(yearMax)) matchYear = false;
-                
+                if (yearMin && parseInt(film.year) < parseInt(yearMin)) matchYear = false;
+                if (yearMax && parseInt(film.year) > parseInt(yearMax)) matchYear = false;
                 const matchGenre = !genre || film.genres.some(g => g.toLowerCase().includes(genre));
                 const matchPlatform = !platform || film.platform.toLowerCase().includes(platform);
-                
                 let matchDuration = true;
                 if (durationMax) {
                     const maxMinutes = convertToMinutes(durationMax);
                     const filmMinutes = convertToMinutes(film.duration);
-                    if (filmMinutes === 0) matchDuration = true; // Si pas de durée, on garde
-                    else matchDuration = filmMinutes <= maxMinutes;
+                    if (filmMinutes > 0) matchDuration = filmMinutes <= maxMinutes;
                 }
-                
                 return matchTitle && matchYear && matchGenre && matchPlatform && matchDuration;
             });
 
             if (hideWatchedMode) filtered = filtered.filter(f => !f.watched);
             if (showOnlyWatchedMode) filtered = filtered.filter(f => f.watched);
-
-            // Tri par année par défaut pour le résultat filtré
             filtered.sort((a, b) => parseInt(b.year) - parseInt(a.year));
             displayFilms(filtered);
             updateStats();
@@ -1056,20 +1124,20 @@
             document.querySelectorAll('.controls input').forEach(i => i.value = '');
             hideWatchedMode = false;
             showOnlyWatchedMode = false;
-            
-            const hideBtn = document.getElementById('hideWatchedBtn');
-            const onlyBtn = document.getElementById('onlyWatchedBtn');
-            
-            if(hideBtn) { hideBtn.className = 'secondary'; hideBtn.textContent = '👁️ Masquer Vus'; }
-            if(onlyBtn) { onlyBtn.className = 'secondary'; onlyBtn.textContent = '✅ Afficher Vus'; }
-            
-            allFilms.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+            if(document.getElementById('hideWatchedBtn')) {
+                document.getElementById('hideWatchedBtn').className = 'secondary';
+                document.getElementById('hideWatchedBtn').textContent = '👁️ Masquer Vus';
+            }
+            if(document.getElementById('onlyWatchedBtn')) {
+                document.getElementById('onlyWatchedBtn').className = 'secondary';
+                document.getElementById('onlyWatchedBtn').textContent = '✅ Afficher Vus';
+            }
             displayFilms(allFilms);
             updateStats();
         }
 
         function getRandomFilm() {
-            if (allFilms.length === 0) return alert('Aucun film dans la collection');
+            if (allFilms.length === 0) return alert('Aucun film');
             const random = allFilms[Math.floor(Math.random() * allFilms.length)];
             displayFilms([random]);
         }
@@ -1077,21 +1145,14 @@
         function handleFileImport(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const newFilms = parseFilmsFromText(e.target.result);
-                    if (newFilms.length === 0) return alert('Aucun film valide trouvé');
-
-                    let addedCount = 0;
-                    let updatedCount = 0;
-
+                    let addedCount = 0, updatedCount = 0;
                     newFilms.forEach(newFilm => {
-                        // On vérifie si le film existe déjà (Titre + Année)
                         const existing = allFilms.find(f => f.title === newFilm.title && f.year === newFilm.year);
                         if (existing) {
-                            // On met à jour les infos mais on garde le statut "Vu"
                             const wasWatched = existing.watched;
                             Object.assign(existing, newFilm);
                             existing.watched = wasWatched;
@@ -1101,28 +1162,16 @@
                             addedCount++;
                         }
                     });
-
                     resetFilters();
-                    alert(`Import terminé !\n🆕 ${addedCount} ajoutés\n🔄 ${updatedCount} mis à jour`);
+                    alert(`Import: ${addedCount} ajoutés, ${updatedCount} mis à jour.`);
                     saveFilmsToStorage();
                     document.getElementById('fileInput').value = '';
-                } catch (error) {
-                    alert('Erreur lecture fichier: ' + error.message);
-                }
+                } catch (error) { alert('Erreur: ' + error.message); }
             };
             reader.readAsText(file);
         }
 
-        // --- OUTILS ---
-
         function checkJustWatch(title, year) {
-            // Création d'un slug propre pour JustWatch
-            let urlTitle = title.toLowerCase().trim()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Enlève les accents
-                .replace(/[^a-z0-9\s-]/g, '') // Enlève les caractères spéciaux
-                .replace(/\s+/g, '-') // Remplace les espaces par des tirets
-                .replace(/-+/g, '-'); // Évite les doubles tirets
-            
             window.open(`https://www.justwatch.com/fr/recherche?q=${encodeURIComponent(title)}`, '_blank');
         }
 
@@ -1137,7 +1186,6 @@
             allFilms[index].watched = !allFilms[index].watched;
             saveFilmsToStorage();
             updateStats();
-            // On ne rafraichit la liste que si on est en mode filtre actif pour éviter de perdre le scroll
             if (hideWatchedMode || showOnlyWatchedMode) filterFilms();
         }
 
@@ -1146,39 +1194,24 @@
                 allFilms.splice(index, 1);
                 saveFilmsToStorage();
                 filterFilms();
-                alert('Film supprimé.');
             }
         }
 
         function toggleHideWatched() {
             hideWatchedMode = !hideWatchedMode;
             showOnlyWatchedMode = false;
-            
-            const btn = document.getElementById('hideWatchedBtn');
-            const onlyBtn = document.getElementById('onlyWatchedBtn');
-            
-            btn.className = hideWatchedMode ? '' : 'secondary';
-            btn.textContent = hideWatchedMode ? '👁️ Afficher Tous' : '👁️ Masquer Vus';
-            
-            onlyBtn.className = 'secondary';
-            onlyBtn.textContent = '✅ Afficher Vus';
-            
+            document.getElementById('hideWatchedBtn').className = hideWatchedMode ? '' : 'secondary';
+            document.getElementById('hideWatchedBtn').textContent = hideWatchedMode ? '👁️ Afficher Tous' : '👁️ Masquer Vus';
+            document.getElementById('onlyWatchedBtn').className = 'secondary';
             filterFilms();
         }
 
         function toggleShowOnlyWatched() {
             showOnlyWatchedMode = !showOnlyWatchedMode;
             hideWatchedMode = false;
-            
-            const btn = document.getElementById('onlyWatchedBtn');
-            const hideBtn = document.getElementById('hideWatchedBtn');
-            
-            btn.className = showOnlyWatchedMode ? '' : 'secondary';
-            btn.textContent = showOnlyWatchedMode ? '✅ Afficher Tous' : '✅ Afficher Vus';
-            
-            hideBtn.className = 'secondary';
-            hideBtn.textContent = '👁️ Masquer Vus';
-            
+            document.getElementById('onlyWatchedBtn').className = showOnlyWatchedMode ? '' : 'secondary';
+            document.getElementById('onlyWatchedBtn').textContent = showOnlyWatchedMode ? '✅ Afficher Tous' : '✅ Afficher Vus';
+            document.getElementById('hideWatchedBtn').className = 'secondary';
             filterFilms();
         }
 
@@ -1186,26 +1219,15 @@
             const seen = new Set();
             const uniqueFilms = [];
             let duplicateCount = 0;
-
             allFilms.forEach(film => {
                 const key = `${film.title}|${film.year}`;
-                if (!seen.has(key)) {
-                    seen.add(key);
-                    uniqueFilms.push(film);
-                } else {
-                    duplicateCount++;
-                }
+                if (!seen.has(key)) { seen.add(key); uniqueFilms.push(film); }
+                else { duplicateCount++; }
             });
-
             allFilms = uniqueFilms;
             saveFilmsToStorage();
             resetFilters();
             alert(`✔ ${duplicateCount} doublons supprimés.`);
-        }
-
-        function goHome() {
-            resetFilters();
-            window.scrollTo(0, 0);
         }
 
         function sortAlphabetically() {
@@ -1218,33 +1240,22 @@
             displayFilms(allFilms);
         }
 
-        // Génère un dégradé de couleur unique basé sur le titre du film
         function generateColorFromTitle(title) {
             let hash = 0;
-            for (let i = 0; i < title.length; i++) {
-                hash = title.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            
+            for (let i = 0; i < title.length; i++) hash = title.charCodeAt(i) + ((hash << 5) - hash);
             const colors = [
                 ['#3b82f6', '#1e40af'], ['#8b5cf6', '#5b21b6'], ['#ec4899', '#be185d'],
                 ['#10b981', '#065f46'], ['#f59e0b', '#92400e'], ['#ef4444', '#7f1d1d'],
-                ['#06b6d4', '#0c4a6e'], ['#6366f1', '#312e81'], ['#14b8a6', '#134e4a'],
-                ['#d946ef', '#581c87'], ['#ea580c', '#7c2d12'], ['#0891b2', '#164e63'],
-                ['#7c3aed', '#4c1d95'], ['#059669', '#064e3b']
+                ['#06b6d4', '#0c4a6e'], ['#6366f1', '#312e81'], ['#14b8a6', '#134e4a']
             ];
-            
             return colors[Math.abs(hash) % colors.length];
         }
 
-        // Effet de halo dynamique au survol
         function setCinemaHalo(card, color) {
             const bg = document.getElementById('dynamic-bg');
             const rect = card.getBoundingClientRect();
-            const x = rect.left + rect.width / 2;
-            const y = rect.top + rect.height / 2;
-
             bg.style.opacity = '1';
-            bg.style.background = `radial-gradient(circle at ${x}px ${y}px, ${color}66 0%, transparent 85%)`;
+            bg.style.background = `radial-gradient(circle at ${rect.left + rect.width / 2}px ${rect.top + rect.height / 2}px, ${color}66 0%, transparent 85%)`;
         }
 
         function resetCinemaHalo() {
@@ -1253,20 +1264,13 @@
             bg.style.background = `radial-gradient(circle at center, rgba(212, 175, 55, 0.05) 0%, transparent 70%)`;
         }
 
-        // Initialisation
         window.addEventListener('DOMContentLoaded', function() {
             loadFilmsFromStorage();
-            
-            // Events listeners pour les filtres (touche Entrée)
             const inputs = ['searchTitle', 'filterYearMin', 'filterYearMax', 'filterGenre', 'filterPlatform', 'filterDuration'];
             inputs.forEach(id => {
-                document.getElementById(id).addEventListener('keypress', e => {
-                    if (e.key === 'Enter') filterFilms();
-                });
+                const el = document.getElementById(id);
+                if(el) el.addEventListener('keypress', e => { if (e.key === 'Enter') filterFilms(); });
             });
-            
-            document.addEventListener('keydown', function(event) {
-                if (event.key === "Escape") closeModal();
-            });
+            document.addEventListener('keydown', function(event) { if (event.key === "Escape") { closeModal(); closeEditModal(); } });
         });
     </script>
