@@ -726,6 +726,17 @@
     justify-content: center;
 }
 
+.btn-success, .btn-info {
+    height: 100%; /* S'assure qu'ils font la même hauteur que les autres */
+    margin: 0;   /* Enlève les marges parasites */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    font-size: 0.7em; /* Même taille de police que les autres */
+    letter-spacing: 0.5px;
+}
+
 .modal.active {
     display: flex; /* S'affiche uniquement avec la classe active */
 }
@@ -742,35 +753,53 @@
         </header>
         
         <div class="controls">
-        <label for="fileInput" class="file-label">📂 Importer TXT</label>
-        <input type="file" id="fileInput" accept=".txt" onchange="handleFileImport(event)">
-        
-        <button onclick="openEditModal(-1)" class="btn-success">＋ Ajouter Film</button>
-        <button onclick="exportData()" class="btn-info">⬇ Exporter DB</button>
-        <button onclick="resetFilters()">Tout</button>
-        <button id="hideWatchedBtn" class="secondary" onclick="toggleHideWatched()">👁️ Masquer Vus</button>
-        <button id="onlyWatchedBtn" class="secondary" onclick="toggleShowOnlyWatched()">✅ Afficher Vus</button>
-        <button onclick="getRandomFilm()">🎲 Aléatoire</button>
-        <button onclick="removeDuplicates()" class="secondary">🧹 Nettoyer</button>
-        <button onclick="sortAlphabetically()" class="secondary">A-Z</button>
-        <button onclick="sortByYear()" class="secondary">Année</button>
-    </div>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label>Titre</label>
+                    <input type="text" id="searchTitle" placeholder="Rechercher...">
+                </div>
+                <div class="control-group">
+                    <label>Année (De)</label>
+                    <input type="number" id="filterYearMin" placeholder="Ex: 2000">
+                </div>
+                <div class="control-group">
+                    <label>Année (À)</label>
+                    <input type="number" id="filterYearMax" placeholder="Ex: 2023">
+                </div>
+                <div class="control-group">
+                    <label>Genre</label>
+                    <input type="text" id="filterGenre" placeholder="Ex: Drame">
+                </div>
+                <div class="control-group">
+                    <label>Plateforme</label>
+                    <input type="text" id="filterPlatform" placeholder="Ex: Netflix">
+                </div>
+                <div class="control-group">
+                    <label>Durée Max</label>
+                    <input type="text" id="filterDuration" placeholder="2:30">
+                </div>
             </div>
-            <div class="button-group">
-                <button onclick="filterFilms()">🔍 Filtrer</button>
-                <button class="secondary" onclick="resetFilters()">↺ Réinitialiser</button>
-                <button class="secondary" onclick="sortAlphabetically()">🔤 Alphabétique</button>
-                <button class="secondary" onclick="sortByYear()">📅 Plus Récent</button>
+
+            <div class="button-group" style="margin-top: 20px;">
+                <button onclick="filterFilms()" style="flex: 1.5; background: #d4af37; color: #0a0e27;">🔍 Filtrer</button>
+                
+                <button class="btn-success" onclick="openEditModal(-1)">＋ Ajouter</button>
+                <button class="btn-info" onclick="exportData()">⬇ Exporter</button>
+
+                <button class="secondary" onclick="resetFilters()">↺ Reset</button>
+                <button class="secondary" onclick="sortAlphabetically()">🔤 A-Z</button>
+                <button class="secondary" onclick="sortByYear()">📅 Récent</button>
                 <button class="secondary" onclick="getRandomFilm()">🎲 Aléatoire</button>
-                <button class="secondary" onclick="toggleHideWatched()" id="hideWatchedBtn">👁️ Masquer Vus</button>
-                <button class="secondary" onclick="toggleShowOnlyWatched()" id="onlyWatchedBtn">✅ Afficher Vus</button>
+                
+                <button class="secondary" id="hideWatchedBtn" onclick="toggleHideWatched()">👁️ Masquer Vus</button>
+                <button class="secondary" id="onlyWatchedBtn" onclick="toggleShowOnlyWatched()">✅ Afficher Vus</button>
+                
                 <button class="secondary" onclick="removeDuplicates()">🗂️ Doublons</button>
+                
                 <button class="secondary" onclick="document.getElementById('fileInput').click()">📂 Importer</button>
                 <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="handleFileImport(event)">
             </div>
-        </div>
-        
-        <div class="stats">
+        </div>        <div class="stats">
             <div class="stats-container">
                 <div class="stats-left" id="statsLeft">0 films</div>
                 <div class="stats-center">
