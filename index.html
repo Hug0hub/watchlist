@@ -876,24 +876,21 @@
         // --- EXTRACTION COULEUR AVEC COLOR THIEF ---
         function extractColorFromImage(img, filmTitle) {
             return new Promise((resolve) => {
-                if (!img.src || img.src.includes('data:')) {
+                if (!img.src || img.src.includes('data:') || !img.complete) {
                     resolve([212, 175, 55]); // Couleur dorée par défaut
                     return;
                 }
 
-                img.crossOrigin = 'Anonymous';
-                img.onload = function() {
-                    try {
-                        const colorThief = new ColorThief();
-                        const color = colorThief.getColor(img);
-                        filmColors[filmTitle] = color;
-                        resolve(color);
-                    } catch (e) {
-                        console.warn(`Couleur non extraite pour ${filmTitle}:`, e);
-                        resolve([212, 175, 55]);
-                    }
-                };
-                img.onerror = () => resolve([212, 175, 55]);
+                try {
+                    const colorThief = new ColorThief();
+                    const color = colorThief.getColor(img);
+                    filmColors[filmTitle] = color;
+                    console.log(`Couleur extraite pour ${filmTitle}:`, color);
+                    resolve(color);
+                } catch (e) {
+                    console.warn(`Couleur non extraite pour ${filmTitle}:`, e.message);
+                    resolve([212, 175, 55]);
+                }
             });
         }
 
@@ -1091,8 +1088,8 @@
                 const isHttp = film.posterUrl && film.posterUrl.toLowerCase().startsWith('http:');
                 const hasUrl = film.posterUrl && film.posterUrl.trim().length > 0;
                 let imgTag = (hasUrl && !isHttp) 
-                    ? `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`
-                    : `<img src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
+                    ? `<img crossorigin="anonymous" src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`
+                    : `<img crossorigin="anonymous" src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
 
                 return `
                 <div class="film-card ${film.watched ? 'watched' : ''}"
@@ -1143,8 +1140,8 @@
             const isHttp = film.posterUrl && film.posterUrl.toLowerCase().startsWith('http:');
             const hasUrl = film.posterUrl && film.posterUrl.trim().length > 0;
             let posterContent = (hasUrl && !isHttp)
-                ? `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`
-                : `<img src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
+                ? `<img crossorigin="anonymous" src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`
+                : `<img crossorigin="anonymous" src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
 
             content.innerHTML = `
                 <button class="modal-close" onclick="closeModal(event)">×</button>
