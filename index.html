@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CINÉMA - Collection Prestigieuse</title>
     <link rel="icon" id="favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🎬</text></svg>" type="image/svg+xml">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/colorthief/2.3.2/color-thief.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@300;400;700&display=swap');
 
@@ -467,22 +468,22 @@
         }
 
         .action-buttons {
-    display: flex;
-    gap: 8px;
-    margin-top: 15px;
-    align-items: center;
-    justify-content: space-between;
-}
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-.action-buttons button {
-    flex: 1; /* Les boutons prennent la même largeur */
-    padding: 8px 5px;
-}
+        .action-buttons button {
+            flex: 1;
+            padding: 8px 5px;
+        }
 
-.edit-btn, .delete-btn {
-    max-width: 35px; /* Sauf les boutons d'icônes qui restent petits */
-    flex: 0 0 35px !important;
-}
+        .edit-btn, .delete-btn {
+            max-width: 35px;
+            flex: 0 0 35px !important;
+        }
 
         .justwatch-btn {
             flex: 1;
@@ -695,7 +696,7 @@
                 padding: 20px;
             }
         }
-		/* --- NOUVEAU CSS POUR LE FORMULAIRE --- */
+
         .form-group { margin-bottom: 15px; text-align: left; }
         .form-group label { display: block; color: #d4af37; margin-bottom: 5px; font-size: 0.9em; }
         .form-group input, .form-group select { 
@@ -712,34 +713,34 @@
         }
         .edit-btn:hover { background: rgba(255,255,255,0.2); }
 
-		.modal {
-    display: none; /* Caché par défaut */
-    position: fixed;
-    z-index: 1000; /* Très haut pour passer devant tout */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.8);
-    backdrop-filter: blur(5px);
-    align-items: center;
-    justify-content: center;
-}
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
 
-.btn-success, .btn-info {
-    height: 100%; /* S'assure qu'ils font la même hauteur que les autres */
-    margin: 0;   /* Enlève les marges parasites */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-transform: uppercase;
-    font-size: 0.7em; /* Même taille de police que les autres */
-    letter-spacing: 0.5px;
-}
+        .btn-success, .btn-info {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            font-size: 0.7em;
+            letter-spacing: 0.5px;
+        }
 
-.modal.active {
-    display: flex; /* S'affiche uniquement avec la classe active */
-}
+        .modal.active {
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -783,7 +784,7 @@
             <div class="button-group" style="margin-top: 20px;">
                 <button onclick="filterFilms()" style="flex: 1.5; background: #d4af37; color: #0a0e27;">🔍 Filtrer</button>
                 
-                <button class="btn-success" onclick="openEditModal(-1)">＋ Ajouter</button>
+                <button class="btn-success" onclick="openEditModal(-1)">➕ Ajouter</button>
                 <button class="btn-info" onclick="exportData()">⬇ Exporter</button>
 
                 <button class="secondary" onclick="resetFilters()">↺ Reset</button>
@@ -799,7 +800,9 @@
                 <button class="secondary" onclick="document.getElementById('fileInput').click()">📂 Importer</button>
                 <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="handleFileImport(event)">
             </div>
-        </div>        <div class="stats">
+        </div>
+
+        <div class="stats">
             <div class="stats-container">
                 <div class="stats-left" id="statsLeft">0 films</div>
                 <div class="stats-center">
@@ -816,17 +819,18 @@
         <div id="filmsList" class="films-grid"></div>
     </div>
 
-	<div id="filmModal" class="modal-overlay" onclick="closeModal(event)">
+    <div id="filmModal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-card" id="modalCardContent" onclick="event.stopPropagation()">
         </div>
     </div>
-		
-		<div id="editModal" class="modal">
+        
+    <div id="editModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <button class="modal-close" onclick="closeEditModal()">×</button>
             <h2 id="modalTitle" style="color: #d4af37; margin-bottom: 20px;">Éditer le film</h2>
             
-            <input type="hidden" id="editIndex"> <div class="form-group">
+            <input type="hidden" id="editIndex">
+            <div class="form-group">
                 <label>Titre</label>
                 <input type="text" id="editTitle" placeholder="Ex: Inception">
             </div>
@@ -867,6 +871,42 @@
         let allFilms = [];
         let hideWatchedMode = false;
         let showOnlyWatchedMode = false;
+        let filmColors = {}; // Cache pour les couleurs extraites
+
+        // --- EXTRACTION COULEUR AVEC COLOR THIEF ---
+        function extractColorFromImage(img, filmTitle) {
+            return new Promise((resolve) => {
+                if (!img.src || img.src.includes('data:')) {
+                    resolve([212, 175, 55]); // Couleur dorée par défaut
+                    return;
+                }
+
+                img.crossOrigin = 'Anonymous';
+                img.onload = function() {
+                    try {
+                        const colorThief = new ColorThief();
+                        const color = colorThief.getColor(img);
+                        filmColors[filmTitle] = color;
+                        resolve(color);
+                    } catch (e) {
+                        console.warn(`Couleur non extraite pour ${filmTitle}:`, e);
+                        resolve([212, 175, 55]);
+                    }
+                };
+                img.onerror = () => resolve([212, 175, 55]);
+            });
+        }
+
+        function rgbToString(rgb) {
+            return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+        }
+
+        function rgbToHex(rgb) {
+            return '#' + rgb.map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
 
         // --- FONCTIONS API TMDB ---
         async function fetchTMDbPoster(title, year) {
@@ -892,6 +932,7 @@
                 if (posterUrl) {
                     imgElement.src = posterUrl;
                     imgElement.style.opacity = '1';
+                    setTimeout(() => extractColorFromImage(imgElement, title), 100);
                 } else {
                     imgElement.style.display = 'none';
                     const container = imgElement.parentElement;
@@ -918,20 +959,16 @@
             localStorage.setItem('cinema_films', JSON.stringify(allFilms));
         }
 
-        // NOUVEAU : Fonction d'exportation
         function exportData() {
             if (allFilms.length === 0) return alert("Rien à exporter !");
 
-            // On reconvertit au format TXT original (Tab separated)
             let content = "";
             allFilms.forEach(f => {
                 const genreStr = f.genres.join(', ');
-                const awardStr = f.awards.join(', '); // Simplification
-                // Format: Titre \t Année \t Durée \t Awards \t Genres \t Plateforme \t PosterURL
+                const awardStr = f.awards.join(', ');
                 content += `${f.title}\t${f.year}\t${f.duration}\t${awardStr}\t${genreStr}\t${f.platform}\t${f.posterUrl}\n`;
             });
 
-            // Création du fichier téléchargeable
             const blob = new Blob([content], { type: 'text/plain' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -962,7 +999,7 @@
             }).filter(f => f && f.title);
         }
 
-        // --- NOUVEAU : GESTION ÉDITION / AJOUT ---
+        // --- GESTION ÉDITION / AJOUT ---
 
         function openEditModal(index) {
             const modal = document.getElementById('editModal');
@@ -977,7 +1014,6 @@
             const modalTitle = document.getElementById('modalTitle');
 
             if (index === -1) {
-                // Mode AJOUT
                 modalTitle.textContent = "Ajouter un film";
                 indexInput.value = -1;
                 titleInput.value = '';
@@ -988,7 +1024,6 @@
                 awardsInput.value = '';
                 posterInput.value = '';
             } else {
-                // Mode ÉDITION
                 const film = allFilms[index];
                 modalTitle.textContent = "Modifier : " + film.title;
                 indexInput.value = index;
@@ -1023,23 +1058,19 @@
                 platform: document.getElementById('editPlatform').value.trim(),
                 awards: document.getElementById('editAwards').value.split(',').map(s => s.trim()).filter(s => s),
                 posterUrl: document.getElementById('editPoster').value.trim(),
-                watched: index !== -1 ? allFilms[index].watched : false // Garde le statut vu si édition
+                watched: index !== -1 ? allFilms[index].watched : false
             };
 
             if (index === -1) {
-                // Ajout
                 allFilms.push(newFilmData);
                 alert(`Film "${title}" ajouté !`);
             } else {
-                // Modification
                 allFilms[index] = newFilmData;
             }
 
             saveFilmsToStorage();
             closeEditModal();
-            closeModal(); // Ferme aussi la modale de détails si ouverte
-            
-            // Si on a appliqué des filtres, on réinitialise pour voir le changement ou on rafraichit
+            closeModal();
             filterFilms(); 
         }
 
@@ -1054,7 +1085,8 @@
 
             list.innerHTML = films.map((film, index) => {
                 const realIndex = allFilms.indexOf(film);
-                const bgColor = generateColorFromTitle(film.title);
+                const bgColor = filmColors[film.title] || [212, 175, 55];
+                const bgGradient = `linear-gradient(135deg, ${rgbToString(bgColor)}, ${rgbToString([Math.max(bgColor[0]-40, 0), Math.max(bgColor[1]-40, 0), Math.max(bgColor[2]-40, 0)])})`;
                 
                 const isHttp = film.posterUrl && film.posterUrl.toLowerCase().startsWith('http:');
                 const hasUrl = film.posterUrl && film.posterUrl.trim().length > 0;
@@ -1064,10 +1096,10 @@
 
                 return `
                 <div class="film-card ${film.watched ? 'watched' : ''}"
-                     onmouseenter="setCinemaHalo(this, '${bgColor[0]}')"
+                     onmouseenter="setCinemaHaloWithColor(this, ${JSON.stringify(bgColor)})"
                      onmouseleave="resetCinemaHalo()"
                      onclick="openModal(${realIndex})">
-                    <div class="film-poster" style="background: linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]});">
+                    <div class="film-poster" style="background: ${bgGradient};">
                         ${imgTag}
                     </div>
                     <div class="film-info-section">
@@ -1090,13 +1122,23 @@
                 </div>
             `;
             }).join('');
+
+            // Extrait les couleurs des images après l'affichage
+            setTimeout(() => {
+                document.querySelectorAll('.film-poster img').forEach(img => {
+                    if (img.src && !img.src.includes('data:')) {
+                        extractColorFromImage(img, img.alt);
+                    }
+                });
+            }, 100);
         }
 
-  function openModal(index) {
+        function openModal(index) {
             const film = allFilms[index];
             const modal = document.getElementById('filmModal');
             const content = document.getElementById('modalCardContent');
-            const bgColor = generateColorFromTitle(film.title);
+            const bgColor = filmColors[film.title] || [212, 175, 55];
+            const bgGradient = `linear-gradient(135deg, ${rgbToString(bgColor)}, ${rgbToString([Math.max(bgColor[0]-40, 0), Math.max(bgColor[1]-40, 0), Math.max(bgColor[2]-40, 0)])})`;
 
             const isHttp = film.posterUrl && film.posterUrl.toLowerCase().startsWith('http:');
             const hasUrl = film.posterUrl && film.posterUrl.trim().length > 0;
@@ -1106,7 +1148,7 @@
 
             content.innerHTML = `
                 <button class="modal-close" onclick="closeModal(event)">×</button>
-                <div class="modal-poster" style="background: linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]});">
+                <div class="modal-poster" style="background: ${bgGradient};">
                     ${posterContent}
                 </div>
                 <div class="modal-info">
@@ -1138,7 +1180,7 @@
             document.body.style.overflow = '';
         }
 
-        // --- FILTRES & UTILS (Inchangé mais inclus pour que tout marche) ---
+        // --- FILTRES & UTILS ---
         function updateStats() {
             const watched = allFilms.filter(f => f.watched).length;
             const total = allFilms.length;
@@ -1287,7 +1329,7 @@
             allFilms = uniqueFilms;
             saveFilmsToStorage();
             resetFilters();
-            alert(`✔ ${duplicateCount} doublons supprimés.`);
+            alert(`✓ ${duplicateCount} doublons supprimés.`);
         }
 
         function sortAlphabetically() {
@@ -1300,28 +1342,21 @@
             displayFilms(allFilms);
         }
 
-        function generateColorFromTitle(title) {
-            let hash = 0;
-            for (let i = 0; i < title.length; i++) hash = title.charCodeAt(i) + ((hash << 5) - hash);
-            const colors = [
-                ['#3b82f6', '#1e40af'], ['#8b5cf6', '#5b21b6'], ['#ec4899', '#be185d'],
-                ['#10b981', '#065f46'], ['#f59e0b', '#92400e'], ['#ef4444', '#7f1d1d'],
-                ['#06b6d4', '#0c4a6e'], ['#6366f1', '#312e81'], ['#14b8a6', '#134e4a']
-            ];
-            return colors[Math.abs(hash) % colors.length];
-        }
-
-        function setCinemaHalo(card, color) {
+        function setCinemaHaloWithColor(card, color) {
             const bg = document.getElementById('dynamic-bg');
             const rect = card.getBoundingClientRect();
             bg.style.opacity = '1';
-            bg.style.background = `radial-gradient(circle at ${rect.left + rect.width / 2}px ${rect.top + rect.height / 2}px, ${color}66 0%, transparent 85%)`;
+            bg.style.background = `radial-gradient(circle at ${rect.left + rect.width / 2}px ${rect.top + rect.height / 2}px, ${rgbToString(color)}66 0%, transparent 85%)`;
         }
 
         function resetCinemaHalo() {
             const bg = document.getElementById('dynamic-bg');
             bg.style.opacity = '0.5';
             bg.style.background = `radial-gradient(circle at center, rgba(212, 175, 55, 0.05) 0%, transparent 70%)`;
+        }
+
+        function goHome() {
+            resetFilters();
         }
 
         window.addEventListener('DOMContentLoaded', function() {
@@ -1334,3 +1369,5 @@
             document.addEventListener('keydown', function(event) { if (event.key === "Escape") { closeModal(); closeEditModal(); } });
         });
     </script>
+</body>
+</html>
