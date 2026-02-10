@@ -850,6 +850,7 @@
         <button onclick="syncStreamingServices()" id="syncBtn" class="btn-primary" style="background: #00e054; color: #0a0e27; font-weight: bold; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
             🔄 Synchroniser les plateformes
         </button>
+
     </div>
 
             <div class="button-group" style="margin-top: 20px;">
@@ -870,6 +871,10 @@
                 
                 <button class="secondary" onclick="document.getElementById('fileInput').click()">📂 Importer</button>
                 <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="handleFileImport(event)">
+		<button onclick="clearCollection()" class="btn-danger" 
+        style="padding: 12px 20px; background: #ef4444; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+    🗑️ Vider la collection
+</button>
             </div>
 
         </div>        <div class="stats">
@@ -1663,4 +1668,27 @@ async function syncStreamingServices() {
         // On cache la barre après 2 secondes pour laisser le temps de voir qu'elle est pleine
         setTimeout(() => { container.style.display = "none"; }, 2000);
     }
-}    </script>
+}   
+
+function clearCollection() {
+    // Première sécurité
+    if (confirm("⚠️ ATTENTION : Es-tu sûr de vouloir supprimer TOUTE ta collection ?")) {
+        
+        // Deuxième sécurité
+        if (confirm("Cette action effacera tes 900 films définitivement de ce navigateur. Confirmer ?")) {
+            
+            // Troisième sécurité (obligatoire pour éviter les erreurs)
+            const validation = prompt("Tape le mot 'SUPPRIMER' en majuscules pour confirmer :");
+            
+            if (validation === "SUPPRIMER") {
+                allFilms = []; // On vide la liste en mémoire
+                saveFilmsToStorage(); // On enregistre la liste vide
+                renderFilms(); // On rafraîchit l'affichage (tout disparaît)
+                alert("La collection a été vidée avec succès.");
+            } else {
+                alert("Action annulée. Tes films sont sains et saufs !");
+            }
+        }
+    }
+}
+ </script>
