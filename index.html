@@ -484,6 +484,26 @@
     flex: 0 0 35px !important;
 }
 
+/* Style pour le logo du fournisseur de streaming */
+.provider-icon {
+    width: 25px;
+    height: 25px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-right: 5px;
+    object-fit: cover;
+}
+
+.stream-btn-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+}
+
+
+
         .justwatch-btn {
             flex: 1;
             padding: 10px;
@@ -537,6 +557,48 @@
             font-weight: 300;
             letter-spacing: 1px;
         }
+	/* --- NOUVEAU CSS POUR VIDEO ET RATING --- */
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%; /* Ratio 16:9 */
+    height: 0;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-top: 20px;
+    background: #000;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.rating-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 15px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stars {
+    color: #00e054; /* Le vert iconique de Letterboxd, ou mettez #d4af37 pour l'or */
+    font-size: 1.2em;
+    letter-spacing: 2px;
+}
+
+.rating-value {
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.9em;
+}
 
         .modal-overlay {
             position: fixed;
@@ -885,6 +947,184 @@
             } catch (error) { console.error(`Erreur TMDb:`, error); }
             return null;
         }
+// --- NOUVELLES FONCTIONS STREAMING ---
+
+// Cache pour éviter de refaire les appels API
+const providerCache = new Map();
+
+async function updateStreamingButton(title, year, buttonId) {
+    const btn = document.getElementById(buttonId);
+    if (!btn) return;
+
+    // Retirer le sablier (le texte par défaut)
+    btn.innerHTML = "..."; 
+
+    const cacheKey = `${title}-${year}`;
+
+    // Vérifier le cache
+    if (providerCache.has(cacheKey)) {
+        applyProvidersToButton(btn, providerCache.get(cacheKey));
+        return;
+    }
+
+    try {
+        // 1. Trouver l'ID du film
+        const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&year=${year}&language=fr-FR`;
+        const searchRes = await fetch(searchUrl);
+        const searchData = await searchRes.json();
+
+        if (!searchData.results || searchData.results.length === 0) {
+            btn.textContent = "Introuvable";
+            return;
+        }
+
+        const movieId = searchData.results[0].id;
+
+        // 2. Trouver les fournisseurs FR
+        const providerUrl = `https://api.themoviedb.org/3/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`;
+        const providerRes = await fetch(providerUrl);
+        const providerData = await providerRes.json();
+        
+        const frData = providerData.results && providerData.results.FR ? providerData.results.FR : null;
+
+        if (frData) {
+            // Priorité : Abonnement (flatrate) > Gratuit (ads) > Location (rent)
+            let providers = frData.flatrate || frData.ads || frData.rent || [];
+            
+            // On prend les 3 premiers max pour ne pas casser le bouton
+            const topProviders = providers.slice(0, 3).map(p => ({
+                name: p.provider_name,
+                logo: `https://image.tmdb.org/t/p/original${p.logo_path}`
+            }));
+
+            const result = {
+                link: frData.link, // Lien vers la page JustWatch
+                providers: topProviders
+            };
+            
+            providerCache.set(cacheKey, result);
+            applyProvidersToButton(btn, result);
+        } else {
+            btn.textContent = "Aucun stream";
+            btn.style.opacity = "0.5";
+        }
+
+    } catch (error) {
+        console.error("Erreur Streaming:", error);
+        btn.textContent = "Erreur";
+    }
+}
+
+
+// --- FONCTION DETAILS (TRAILER + NOTE) ---
+async function loadExtendedDetails(title, year) {
+    const container = document.getElementById('dynamic-movie-details');
+    if (!container) return;
+
+    try {
+        // 1. Recherche du film pour avoir l'ID
+        const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&year=${year}&language=fr-FR`;
+        const searchRes = await fetch(searchUrl);
+        const searchData = await searchRes.json();
+
+        if (!searchData.results || searchData.results.length === 0) {
+            container.innerHTML = "";
+            return;
+        }
+
+        const movie = searchData.results[0];
+        const movieId = movie.id;
+        const rating = movie.vote_average; // Note sur 10
+
+        // 2. Récupérer les vidéos (Trailers)
+        const videoUrl = `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=fr-FR`; // Essai en FR
+        let videoRes = await fetch(videoUrl);
+        let videoData = await videoRes.json();
+        
+        // Si pas de trailer FR, on cherche en anglais
+        if (!videoData.results || videoData.results.length === 0) {
+            const videoUrlEn = `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=en-US`;
+            videoRes = await fetch(videoUrlEn);
+            videoData = await videoRes.json();
+        }
+
+        // Trouver le trailer YouTube
+        const trailer = videoData.results.find(v => v.site === "YouTube" && (v.type === "Trailer" || v.type === "Teaser"));
+        
+        // --- CONSTRUCTION HTML ---
+        let htmlContent = '';
+
+        // Affichage Note (Style Letterboxd)
+        if (rating) {
+            const starsCount = Math.round(rating) / 2; // Convertir /10 en /5
+            let starsStr = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= starsCount) starsStr += '★';
+                else if (i - 0.5 <= starsCount) starsStr += '½'; // Demi-étoile (optionnel, sinon ☆)
+                else starsStr += '☆';
+            }
+            
+            htmlContent += `
+                <div class="rating-container" title="Note TMDb : ${rating}/10">
+                    <span class="stars">${starsStr}</span>
+                    <span class="rating-value">${rating.toFixed(1)}</span>
+                </div>
+            `;
+        }
+
+        // Affichage Trailer
+        if (trailer) {
+            htmlContent += `
+                <div class="video-container">
+                    <iframe src="https://www.youtube.com/embed/${trailer.key}" 
+                            title="Bande annonce" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
+            `;
+        } else {
+            htmlContent += `<div style="margin-top:20px; color:#666; font-size:0.8em; text-align:center;">Aucune bande-annonce trouvée</div>`;
+        }
+
+        // Injection avec effet fondu
+        container.style.opacity = 0;
+        container.innerHTML = htmlContent;
+        setTimeout(() => { 
+            container.style.transition = "opacity 0.5s";
+            container.style.opacity = 1; 
+        }, 100);
+
+    } catch (e) {
+        console.error("Erreur Details:", e);
+        container.innerHTML = "";
+    }
+}
+
+function applyProvidersToButton(btn, data) {
+    if (data.providers && data.providers.length > 0) {
+        // Création du HTML avec plusieurs images
+        const iconsHtml = data.providers.map(p => 
+            `<img src="${p.logo}" class="provider-icon" title="${p.name}" alt="${p.name}">`
+        ).join('');
+        
+        btn.innerHTML = `<div class="stream-btn-content">${iconsHtml}</div>`;
+        
+        // Couleur de fond "JustWatch" (jaune/or) ou Netflix (rouge) ? 
+        // Gardons votre bleu/cyan actuel ou passons à un gris neutre pour faire ressortir les logos
+        btn.style.background = "rgba(255, 255, 255, 0.1)";
+        btn.style.border = "1px solid rgba(255, 255, 255, 0.2)";
+    } else {
+        btn.textContent = "Voir options";
+    }
+    
+    // Le clic ouvre toujours la page globale JustWatch pour choisir
+    btn.onclick = (e) => {
+        e.stopPropagation();
+        window.open(data.link, '_blank');
+    };
+}
 
         function tryTMDbPoster(imgElement, title, year) {
             imgElement.onerror = null; 
@@ -1082,7 +1322,12 @@
                         </div>
                         
                         <div class="action-buttons">
-                            <button onclick="event.stopPropagation(); checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn">Stream</button>
+                            <button id="stream-btn-${realIndex}" 
+        class="justwatch-btn loading-pulse" 
+        onclick="event.stopPropagation(); checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})">
+    ⏳
+</button>
+<img src="" onerror="updateStreamingButton('${film.title.replace(/'/g, "\\'")}', '${film.year}', 'stream-btn-${realIndex}')" style="display:none;">
                             <button onclick="event.stopPropagation(); openEditModal(${realIndex})" class="edit-btn" title="Modifier">✎</button>
                             <button onclick="event.stopPropagation(); deleteFilm(${realIndex})" class="delete-btn">✕</button>
                         </div>
@@ -1093,44 +1338,54 @@
         }
 
   function openModal(index) {
-            const film = allFilms[index];
-            const modal = document.getElementById('filmModal');
-            const content = document.getElementById('modalCardContent');
-            const bgColor = generateColorFromTitle(film.title);
+    const film = allFilms[index];
+    const modal = document.getElementById('filmModal');
+    const content = document.getElementById('modalCardContent');
+    const bgColor = generateColorFromTitle(film.title);
 
-            const isHttp = film.posterUrl && film.posterUrl.toLowerCase().startsWith('http:');
-            const hasUrl = film.posterUrl && film.posterUrl.trim().length > 0;
-            let posterContent = (hasUrl && !isHttp)
-                ? `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`
-                : `<img src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
+    const isHttp = film.posterUrl && film.posterUrl.toLowerCase().startsWith('http:');
+    const hasUrl = film.posterUrl && film.posterUrl.trim().length > 0;
+    
+    // Gestion de l'image
+    let posterContent = (hasUrl && !isHttp)
+        ? `<img src="${film.posterUrl}" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`
+        : `<img src="" alt="${film.title}" style="width: 100%; height: 100%; object-fit: cover;" onerror="tryTMDbPoster(this, '${film.title.replace(/'/g, "\\'")}', '${film.year}')">`;
 
-            content.innerHTML = `
-                <button class="modal-close" onclick="closeModal(event)">×</button>
-                <div class="modal-poster" style="background: linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]});">
-                    ${posterContent}
-                </div>
-                <div class="modal-info">
-                    <h2 style="font-family:'Playfair Display', serif; font-size: 2.5em; color: #d4af37; margin-bottom: 10px;">${film.title}</h2>
-                    <div style="color: #b8956a; font-size: 1.1em; margin-bottom: 20px;">
-                        ${film.year} • ${film.duration} ${film.platform ? '• ' + film.platform : ''}
-                    </div>
-                    <div style="margin-bottom: 25px;">
-                        ${film.genres.map(g => `<span class="genre-tag" style="font-size: 0.9em; padding: 6px 12px; margin-right: 8px;">${g}</span>`).join('')}
-                    </div>
-                    ${film.awards.length > 0 ? `<div style="margin-bottom: 25px; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 4px;">
-                        <h3 style="color: #d4af37; font-size: 0.9em; text-transform: uppercase; margin-bottom: 10px;">Récompenses</h3>
-                        <div class="awards">${film.awards.map(a => `<span class="award-badge">🏆 ${a}</span>`).join('')}</div>
-                    </div>` : ''}
-                    <div style="margin-top: 30px; display: flex; gap: 15px;">
-                        <button onclick="checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn" style="padding: 15px 30px;">🎥 Streaming</button>
-                        
-                        <button onclick="closeModal(); openEditModal(${index})" class="btn-primary" style="padding: 15px 30px; border:none; border-radius:4px;">✎ Modifier</button>
-                    </div>
-                </div>
-            `;
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
+    content.innerHTML = `
+        <button class="modal-close" onclick="closeModal(event)">×</button>
+        <div class="modal-poster" style="background: linear-gradient(135deg, ${bgColor[0]}, ${bgColor[1]});">
+            ${posterContent}
+        </div>
+        <div class="modal-info">
+            <h2 style="font-family:'Playfair Display', serif; font-size: 2.5em; color: #d4af37; margin-bottom: 5px;">${film.title}</h2>
+            
+            <div id="dynamic-movie-details" style="min-height: 40px; margin-bottom: 15px;"></div>
+
+            <div style="color: #b8956a; font-size: 1.1em; margin-bottom: 20px;">
+                ${film.year} • ${film.duration} ${film.platform ? '• ' + film.platform : ''}
+            </div>
+            <div style="margin-bottom: 25px;">
+                ${film.genres.map(g => `<span class="genre-tag" style="font-size: 0.9em; padding: 6px 12px; margin-right: 8px;">${g}</span>`).join('')}
+            </div>
+            ${film.awards.length > 0 ? `<div style="margin-bottom: 25px; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 4px;">
+                <h3 style="color: #d4af37; font-size: 0.9em; text-transform: uppercase; margin-bottom: 10px;">Récompenses</h3>
+                <div class="awards">${film.awards.map(a => `<span class="award-badge">🏆 ${a}</span>`).join('')}</div>
+            </div>` : ''}
+            
+            <div style="margin-top: 30px; display: flex; gap: 15px;">
+                <button onclick="checkJustWatch('${film.title.replace(/'/g, "\\'")}', ${film.year})" class="justwatch-btn" style="padding: 15px 30px;">🎥 Streaming</button>
+                
+                <button onclick="closeModal(); openEditModal(${index})" class="btn-primary" style="padding: 15px 30px; border:none; border-radius:4px;">✎ Modifier</button>
+            </div>
+        </div>
+    `;
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // APPEL ASYNCHRONE POUR CHARGER LA VIDEO ET LA NOTE
+    loadExtendedDetails(film.title, film.year);
+}
 
         function closeModal(event) {
             if (event) event.stopPropagation();
