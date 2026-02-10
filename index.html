@@ -840,7 +840,13 @@
                     <label>Durée Max</label>
                     <input type="text" id="filterDuration" placeholder="2:30">
                 </div>
+
             </div>
+<div style="display: flex; justify-content: flex-start;">
+        <button onclick="syncStreamingServices()" id="syncBtn" class="btn-primary" style="background: #00e054; color: #0a0e27; font-weight: bold; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+            🔄 Synchroniser les plateformes
+        </button>
+    </div>
 
             <div class="button-group" style="margin-top: 20px;">
                 <button onclick="filterFilms()" style="flex: 1.5; background: #d4af37; color: #0a0e27;">🔍 Filtrer</button>
@@ -861,6 +867,7 @@
                 <button class="secondary" onclick="document.getElementById('fileInput').click()">📂 Importer</button>
                 <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="handleFileImport(event)">
             </div>
+
         </div>        <div class="stats">
             <div class="stats-container">
                 <div class="stats-left" id="statsLeft">0 films</div>
@@ -1076,12 +1083,14 @@ async function loadExtendedDetails(title, year) {
         if (trailer) {
             htmlContent += `
                 <div class="video-container">
-                    <iframe src="https://www.youtube.com/embed/${trailer.key}" 
-                            title="Bande annonce" 
-                            frameborder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen>
-                    </iframe>
+                  <iframe 
+    src="https://www.youtube-nocookie.com/embed/${trailer.key}?rel=0&modestbranding=1&showinfo=0" 
+    title="Bande annonce" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen
+    referrerpolicy="strict-origin-when-cross-origin">
+</iframe>
                 </div>
             `;
         } else {
@@ -1588,4 +1597,53 @@ function applyProvidersToButton(btn, data) {
             });
             document.addEventListener('keydown', function(event) { if (event.key === "Escape") { closeModal(); closeEditModal(); } });
         });
+
+
+async function syncStreamingServices() {
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = "Scanning...";
+    btn.disabled = true;
+
+    let count = 0;
+
+    for (let film of allFilms) {
+        try {
+            // Étape 1 : Trouver l'ID du film
+            const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(film.title)}&year=${film.year}&language=fr-FR`;
+            const res = await fetch(searchUrl);
+            const data = await res.json();
+            
+            if (data.results && data.results.length > 0) {
+                const movieId = data.results[0].id;
+
+                // Étape 2 : Chercher les fournisseurs de streaming (JustWatch via TMDb)
+                const watchUrl = `https://api.themoviedb.org/3/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`;
+                const wRes = await fetch(watchUrl);
+                const wData = await wRes.json();
+
+                // On vérifie les résultats pour la France (FR) en mode abonnement (flatrate)
+                const providers = wData.results?.FR?.flatrate;
+                
+                if (providers && providers.length > 0) {
+                    // On met à jour le film avec le nom du premier fournisseur trouvé
+                    film.platform = providers[0].provider_name;
+                    count++;
+                } else {
+                    film.platform = "Indisponible"; // Ou laisser vide
+                }
+            }
+        } catch (e) {
+            console.error("Erreur pour " + film.title, e);
+        }
+    }
+
+    // Sauvegarde et rafraîchissement
+    saveFilmsToStorage();
+    renderFilms();
+    
+    btn.innerText = originalText;
+    btn.disabled = false;
+    alert(`${count} films ont été mis à jour avec leurs plateformes actuelles !`);
+}
     </script>
